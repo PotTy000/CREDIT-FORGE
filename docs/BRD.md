@@ -1,6 +1,6 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 0.8 — Phase 2 consolidated; final review pending  
+**Version:** 1.0 — Phase 2 approved baseline  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
 **Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases; 2.6 Business Rules Analysis; 2.7 Financial Model Research; 2.8 BRD Consolidation & Review.
@@ -897,11 +897,11 @@ Phase 3 proposed deliverable: docs/FINANCIAL_RULES.md (not yet created), with ve
 
 ### 2.8.5 Final Gate 08
 
-Business objectives, boundaries, decisions, domain, processes, use cases and rules documented at business level; research accepted with stated evidence limitations. Financial formulas, detailed state transitions, implementation and testing not complete. No legal/commercial validation or claim of compliance. Recommend approval of v0.8 as Phase 2 business-analysis baseline. Final owner sign-off pending; no automatic approval of open proposals or final MVP scope. Changes to confirmed decisions require recorded revision.
+Business objectives, boundaries, decisions, domain, processes, use cases and rules documented at business level; research accepted with stated evidence limitations. Financial formulas, detailed state transitions, implementation and testing not complete. No legal/commercial validation or claim of compliance. Owner explicitly confirmed Gate 08. BRD v1.0 is approved as the Phase 2 business-analysis baseline; Phase 2 complete. Approval does not confirm open proposals or final MVP scope. Changes to confirmed decisions require recorded revision.
 
 
 
-No final MVP commitment, database schema or validated financial formulas in this draft.
+No final MVP commitment, database schema or validated financial formulas in this approved business-analysis baseline.
 
 ## Revision history
 
@@ -914,5 +914,5 @@ No final MVP commitment, database schema or validated financial formulas in this
 | 0.5 | Revise BD-020 from pause to allow overdue trading with warnings; update process/use cases and acceptance scenarios; retain BD-019/021/022; Gate 05 pending |
 | 0.6 | Confirm BD-023–027; consolidate BR-001–070; add decision traceability, rule tests and Gate 06 |
 | 0.7 | Confirm BD-028–031 and BR-065–069 policy; retain BD-020 allow; add financial reference research and Phase 3 candidates |
-
 | 0.8 | Confirm Gate 07; consolidate decisions, consistency, traceability and open issues; Gate 08 pending |
+| 1.0 | Owner confirms Gate 08; approve Phase 2 baseline and authorize Phase 3 Financial Rules Specification |
