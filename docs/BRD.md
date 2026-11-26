@@ -1,9 +1,9 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 0.5 — Gate 04 revised (BD-020 allow); business use cases updated  
+**Version:** 0.6 — Gate 05 confirmed; business rules draft  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
-**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases.
+**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases; 2.6 Business Rules Analysis.
 
 Confirmed = inherited from approved baseline or explicitly approved review gate; Proposed = recommendation awaiting review. This draft does not change the approved baseline.
 
@@ -70,7 +70,7 @@ These are product verification criteria, not validated market KPIs. No commercia
 
 ### 2.1.4 Constraints and assumptions
 
-Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Confirmed at Gate 03: one issuance and offering per loan, one collateral per loan, eligibility based on outstanding principal including partially repaid loans, partial listing fill. Confirmed at Gate 04: dual approval of repayment/recovery receipts, allow trading on verified overdue with risk disclosure; stop new trading on default or maturity, honor eligible existing orders at offering closure, cancellation of unreserved listing remainder. Exact financial conventions, eligibility, payment finality and role assignments remain open. Time, team and grading rubric not confirmed.
+Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Confirmed at Gate 03: one issuance and offering per loan, one collateral per loan, eligibility based on outstanding principal including partially repaid loans, partial listing fill. Confirmed at Gate 04: dual approval of repayment/recovery receipts, allow trading on verified overdue with risk disclosure; stop new trading on default or maturity, honor eligible existing orders at offering closure, cancellation of unreserved listing remainder. Confirmed at Gate 05: prohibit self-purchase; cancel/relist to change price; snapshot verified receiving accounts for existing instructions; dual approval of loan status; explicit overdue-risk acknowledgement. Exact financial conventions, payment finality and detailed eligibility remain open. Time, team and grading rubric not confirmed.
 
 ## 2.2 Stakeholder Analysis
 
@@ -110,7 +110,7 @@ Confirmed at Gate 02-R1: ACT-004 and ACT-005 are capability groups assigned to o
 | Register existing loan and propose terms | Issuer Officer | Issuer Approver; Marketplace eligibility checks |
 | Publish offering | Marketplace Reviewer or automated release after approval | Approved terms; no editing by reviewer |
 | Record repayment/recovery facts | Issuer Officer | Distinct Issuer Approver for repayment/recovery receipts; unique external reference |
-| Confirm default | Authorized issuer role | Evidence and policy; not arbitrary Marketplace decision |
+| Confirm overdue/cure/default | Issuer Officer submits; distinct Issuer Approver confirms | Evidence and policy; no automatic default or arbitrary Marketplace decision (BD-026) |
 | Create listing/order | Investor (issuer for primary offering) | Ownership, quantity and trading eligibility |
 | Confirm external payment | Payment System | CreditForge verification; no manual paid-status override |
 | Transfer ownership | Automated CreditForge settlement | Valid payment, reservation, eligibility and idempotency |
@@ -372,7 +372,7 @@ Price and quantity fixed in order; total verified against payment evidence. Paym
 
 Seller selects available Senior units, sets price and quantity, confirms listing. System locks listed units. Buyer selects integer quantity up to available listing quantity; system reserves units for that order. Buyer authorizes payment directly to verified Seller receiving account. Verified confirmation permits settlement; ownership moves once and listing remaining quantity reduces. Other buyers may purchase remaining units.
 
-Example: list 1,000 units; order A reserves 300, order B reserves 200. Before settlement: 500 available, 500 reserved, Seller still owns all 1,000. After A settles: 300 sold, 200 reserved, 500 available; after B settles: 500 sold, 0 reserved, 500 available. Reservation is a subset of listing lock, not a second deduction. Cancelling a listing must not release units backing unresolved paid/pending orders. Cancellation of unreserved remainder is confirmed under BD-022; price amendment policy remains pending; order price/payee snapshot must not silently change.
+Example: list 1,000 units; order A reserves 300, order B reserves 200. Before settlement: 500 available, 500 reserved, Seller still owns all 1,000. After A settles: 300 sold, 200 reserved, 500 available; after B settles: 500 sold, 0 reserved, 500 available. Reservation is a subset of listing lock, not a second deduction. Cancelling a listing must not release units backing unresolved paid/pending orders. Cancellation of unreserved remainder is confirmed under BD-022; BD-024 requires cancellation of unreserved remainder and a new listing to change price; existing order price/payee snapshot must not silently change.
 
 ### 2.4.5 BP-005 — Payment exception and reconciliation
 
@@ -440,7 +440,7 @@ Maturity is a date, not proof of payment. Verify outstanding principal and inter
 | BD-021 | Offering closure with pending orders | Stop new orders immediately; honor pre-existing valid reservations through original payment deadline if loan remains eligible; otherwise reconcile and refund as required; never reopen closed offering |
 | BD-022 | Listing cancellation with pending orders | Allow cancellation of unreserved remainder; existing reservations remain until definitively unpaid, settled or otherwise resolved; no cancellation that strands paid Buyer |
 
-All four decisions confirmed by project owner; BD-020 revised from pause to allow in Gate 04-R1. BD-019, BD-021 and BD-022 unchanged. BD-020 is a project-specific risk and scope policy, not a universal RWA industry standard. Reservation duration, payment finality, late confirmations, dispute resolution, price amendment, default grace and exact payout/settlement retry rules remain open. No new technical architecture commitment.
+All four decisions confirmed by project owner; BD-020 revised from pause to allow in Gate 04-R1. BD-019, BD-021 and BD-022 unchanged. BD-020 is a project-specific risk and scope policy, not a universal RWA industry standard. Reservation duration, payment finality, late confirmations, dispute resolution, default grace and exact payout/settlement retry rules remain open. No new technical architecture commitment.
 
 ### 2.4.10 BD-020 reference research
 
@@ -457,9 +457,9 @@ Evidence limitation: Mintos overdue-funds article was read in full; some other o
 
 **Revised decision (Gate 04-R1):** supersede the previous pause-on-overdue choice. Allow new primary and secondary orders during issuer-confirmed overdue, with explicit risk warnings and all other eligibility checks. Stop new trades on default, recovery, maturity or closure. An already closed primary offering never reopens; an independent suspension for another valid reason is not overridden. Continue servicing, distributions, payout and reconciliation. A missing manual receipt alone is not proof of delinquency. This policy preserves a possible exit route, but does not guarantee liquidity and increases adverse-selection and unpaid-interest allocation risks. The reference research above is retained as historical context; it does not establish that this policy is an industry standard.
 
-Proposed controls awaiting review: disclose verified overdue obligations, days overdue and last status update on asset, listing and checkout; require explicit buyer acknowledgement before payment, tied to the disclosed status version; if material risk changes before settlement, revalidate and route unresolved orders to reconciliation, without automatic transfer or release of paid reservations. Do not assume consent to a changed risk profile. Exact treatment of already authorized/paid orders, information cutoffs and unpaid pre-transfer interest remains open. Distinguish delinquency from default and impairment; no new valuation model or guaranteed recovery is implied.
+Confirmed BD-027: require explicit buyer acknowledgement of overdue risk before payment authorization in either market. Proposed implementation controls: disclose verified overdue obligations, days overdue and last status update on asset, listing and checkout; bind acknowledgement to the disclosed status version; if material risk changes before settlement, revalidate and route unresolved orders to reconciliation, without automatic transfer or release of paid reservations. Do not assume consent to a changed risk profile. Exact treatment of already authorized/paid orders, information cutoffs and unpaid pre-transfer interest remains open. Distinguish delinquency from default and impairment; no new valuation model or guaranteed recovery is implied.
 
-## 2.5 Business Use Cases — draft for review
+## 2.5 Business Use Cases — Gate 05 reviewed; detailed specifications pending
 
 ### 2.5.1 Actor and use-case inventory
 
@@ -482,7 +482,7 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | UC-013 | Record external repayment receipt | Issuer Officer | BP-006 / BO-006 |
 | UC-014 | Verify repayment/recovery receipt | Issuer Approver | BP-006,008 / BO-006,008 |
 | UC-015 | Monitor automatic payout and resolve failure | Marketplace Operator | BP-007 / BO-009 |
-| UC-016 | Update verified overdue/cure/default status | Authorized issuer role | BP-008 / BO-005 |
+| UC-016 | Update verified overdue/cure/default status | Issuer Officer + distinct Issuer Approver | BP-008 / BO-005 |
 | UC-017 | Record external recovery receipt | Issuer Officer | BP-008 / BO-005,006 |
 | UC-018 | Review final settlement and collateral release | Authorized issuer role | BP-009 / BO-005,008 |
 | UC-019 | View own portfolio and financial history | Investor | BP-003–009 / BO-003,008 |
@@ -498,17 +498,17 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | UC-003 | Issuer-approved version | Check eligibility, data consistency, disclosure; approve/return/reject | Publication approval, not credit underwriting; no reviewer modification of approved terms |
 | UC-004 | Both approvals for same version, valid opening snapshot | Revalidate, issue Senior/Junior once to Bank, publish one Senior offering | Bank owns initial rights; failure retry does not mint twice; no second issuance/reopening |
 | UC-005 | Published product visible to eligible viewer | View loan, terms, collateral summary, verified overdue status and risk warning, available units/listings | Informed decision; overdue does not itself prevent an order; suspended/defaulted/matured items clearly marked and ineligible for new orders |
-| UC-006 | Authenticated Investor | Submit simulated bank destination; verify identity/account under chosen policy | Verified receiving account; failed verification prevents dependent transaction; no credentials/PIN/OTP stored |
-| UC-007 | Eligible Investor, open eligible offering, available units | Choose quantity, disclose overdue risk where applicable, reserve, authorize bank payment to Issuer, verify confirmation, settle | Ownership and accrual begin on completion; handle duplicate, mismatch, timeout and settlement failure via UC-012 |
+| UC-006 | Authenticated Investor | Submit simulated bank destination; verify identity/account under chosen policy | Verified receiving account; new destination applies only to new instructions, existing instructions retain snapshot; failed verification prevents dependent transaction; no credentials/PIN/OTP stored |
+| UC-007 | Eligible Investor, open eligible offering, available units | Choose quantity, disclose overdue risk and require acknowledgement where applicable, reserve, authorize bank payment to Issuer, verify confirmation, settle | Ownership and accrual begin on completion; handle duplicate, mismatch, timeout and settlement failure via UC-012 |
 | UC-008 | Seller owns available transferable Senior units; verified receiving account | Set integer quantity and fixed price; validate and lock units; show canonical overdue warning if applicable | Active listing; overdue alone is not a rejection reason; reject oversell, otherwise ineligible loan or invalid price |
-| UC-009 | Eligible Buyer, active eligible listing and available quantity | Select partial/full quantity; disclose overdue risk where applicable; reserve; authorize direct transfer to Seller; verify and settle | Buyer owns purchased units, remaining listing stays available; price/coupon distinction preserved; exceptions UC-012 |
-| UC-010 | Seller owns listing | Cancel unreserved remainder; preserve order-specific reservations | No new orders for cancelled remainder; reserved units resolved independently |
+| UC-009 | Eligible Buyer, active eligible listing and available quantity | Reject self-purchase; select partial/full quantity; disclose overdue risk and require acknowledgement where applicable; reserve; authorize direct transfer to Seller; verify and settle | Buyer owns purchased units, remaining listing stays available; price/coupon distinction preserved; exceptions UC-012 |
+| UC-010 | Seller owns listing | Cancel unreserved remainder; preserve order-specific reservations; create new listing if changing price | No new orders for cancelled remainder; reserved units resolved independently |
 | UC-011 | Authorized issuer or scheduled closure condition | Close offering to new orders; honor existing valid reservations within original deadline if still eligible | Unsold Senior remains Bank; no reopening; unsafe pending cases UC-012 |
 | UC-012 | Payment mismatch, unknown, late, duplicate or settlement failure | Query trusted evidence; reconcile; retry safe settlement or request authorized refund | Completed, refunded or unresolved case; no manual paid override or unauthorized debit; no double-sale |
 | UC-013 | Officer; confirmed external receipt evidence | Enter loan, unique reference, actual date, amount and components; submit | Pending approval; no allocation yet; duplicate/history mismatch rejected |
 | UC-014 | Submitted receipt; distinct Approver | Verify evidence and amounts; approve or return/reject | Approved receipt triggers one distribution run and authorized payout instructions; reject incorrect or duplicate input |
 | UC-015 | Posted payable or payment exception | Inspect instruction and bank status; reconcile; retry safely if permitted | Confirmed payout or outstanding obligation; no second distribution, no wallet credit |
-| UC-016 | Evidence of actual loan condition | Verify overdue/cure/default and effective date; record authorized decision; apply trading restrictions | Overdue updates risk disclosure without automatic trading pause; cure updates status; default/maturity stop new orders; missing record alone insufficient |
+| UC-016 | Evidence of actual loan condition | Officer verifies evidence and proposes overdue/cure/default with effective date; distinct Approver confirms; apply disclosure and trading rules | Overdue updates risk disclosure without automatic trading pause; cure updates status; default/maturity stop new orders; missing record alone insufficient |
 | UC-017 | Authorized Officer, actual recovery received externally | Enter net receipt, source, reference and evidence; submit to UC-014 | Verified recovery input; interim receipt not automatic final loss |
 | UC-018 | Loan obligations resolved or final loss recognized under policy | Review principal, allocations, payouts, pending trades/refunds, retirement and release evidence | Closure status and separate release record; unresolved obligations retained; no automatic closure solely on maturity |
 | UC-019 | Authenticated Investor | View own holdings, acquisition cost, rights, payments, pending/received payouts and losses | Traceable portfolio; pending payout is not spendable cash |
@@ -534,7 +534,11 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | Listing 1,000, order reserves 300, seller cancels | 700 unlocked; 300 preserved until resolved |
 | Offering closes while eligible order still valid | No new orders; existing valid order may settle before its deadline |
 | Verified overdue while order pending | New orders remain allowed with warnings if otherwise eligible; pending order risk changes reviewed under proposed control; no automatic release of paid reservation |
-| Verified overdue before new purchase | Primary/secondary orders allowed if otherwise eligible; explicit risk warning; proposed acknowledgement before payment |
+| Verified overdue before new purchase | Primary/secondary orders allowed if otherwise eligible; explicit risk warning and required acknowledgement before payment |
+| Buyer attempts own listing | Denied before payment |
+| Seller reprices listing with pending order | Cancel unreserved remainder; create new listing; reserved price unchanged |
+| Receiving account changes during payout | Existing instruction destination unchanged |
+| Missing repayment record | Flag for dual status review; no automatic overdue |
 | Default or maturity while order pending | Stop new orders; reconcile existing obligations; no automatic release of paid reservation |
 | Same payment confirmation received twice | One ownership transfer |
 | Payment confirmed but settlement fails | Traceable exception; preserve obligation, no duplicate transfer |
@@ -542,20 +546,181 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | Distribution posted, payout fails | Investor payable remains outstanding; no duplicate allocation |
 | Final recovery below principal | Junior-first and pari passu loss, sum reconciles under financial rules |
 
-### 2.5.5 Review Gate 05 — proposed operational decisions
+### 2.5.5 Review Gate 05 — confirmed operational decisions
 
-| ID | Decision | Recommendation |
+| ID | Decision | Confirmed selection |
 |---|---|---|
 | BD-023 | Can Investor buy own secondary listing? | Prohibit self-purchase; no economic ownership change, avoids artificial volume and needless transfer |
 | BD-024 | Can Seller change listing price? | Cancel unreserved remainder and create new listing; preserve price of reserved orders; no in-place amendment in MVP |
 | BD-025 | Can receiving account change during pending payout/trade? | Verify new account for future instructions only; snapshot destination for existing instructions; exceptions require reconciliation |
 | BD-026 | Who confirms overdue/cure/default status? | Officer submits evidence; Approver confirms status before risk disclosure update or default restriction; missing data flagged for review, not automatically default |
 
-These four are recommendations awaiting review. Additional proposed BD-027: require explicit acknowledgement of verified overdue risk before buyer authorizes payment (both markets); record the disclosed risk status/version and route material changes in pending orders to review. This does not change confirmed permission to trade overdue loans. Business use cases are a draft inventory, not final MVP scope. Exact eligibility, authentication, payment expiry, in-flight suspension handling, repayment schedules, financial calculation and recovery finality remain open.
+| BD-027 | Must buyer acknowledge overdue risk? | Required before authorization in both markets |
 
-## 2.6–2.8 Pending
+All five confirmed by project owner. Proposed implementation: record disclosed risk status/version and route material changes in pending orders to review. This does not change permission to trade overdue loans. Business use cases are a draft inventory, not final MVP scope. Exact eligibility, authentication, payment expiry, in-flight suspension handling, repayment schedules, financial calculation and recovery finality remain open.
 
-- 2.6 Business Rules Analysis
+## 2.6 Business Rules Analysis — consolidated draft
+
+### 2.6.1 Rule governance
+
+A Business Decision (BD) records an agreed policy; a Business Rule (BR) constrains an operation; a Use Case (UC) describes an actor's goal; an Acceptance Scenario verifies observable results. Preserve baseline IDs BR-001–045, append new IDs and do not silently promote an analyst proposal to a confirmed policy. Confirmed principles may still require detailed formulas or implementation rules. Gate 05 confirmed the five choices; the four Gate 06 choices remain open.
+
+### 2.6.2 Inherited baseline rules
+
+| ID | Rule (baseline wording) | Maturity |
+|---|---|---|
+| BR-001 | Chỉ chào bán sau khi khoản vay giải ngân ngoài hệ thống | Baseline principle |
+| BR-002 | Token hóa quyền lợi kinh tế từ khoản vay có tài sản bảo đảm | Baseline principle |
+| BR-003 | Token không mặc nhiên là sở hữu collateral | Baseline principle |
+| BR-004 | Senior và Junior | Baseline principle |
+| BR-005 | Bank giữ toàn bộ Junior | Baseline principle |
+| BR-006 | Junior chịu loss trước Senior | Confirmed principle; Phase 3 formula pending |
+| BR-007 | Unsold Senior thuộc Bank | Baseline principle |
+| BR-008 | Senior pari passu | Baseline principle |
+| BR-009 | Loss cùng tranche theo quyền lợi còn lại | Confirmed principle; Phase 3 formula pending |
+| BR-010 | Không tùy ý đổi tranche sau phát hành | Baseline principle |
+| BR-011 | Primary: Bank bán Senior | Baseline principle |
+| BR-012 | Secondary: Investor chuyển nhượng | Baseline principle |
+| BR-013 | Seller đặt giá chào | Baseline principle |
+| BR-014 | Coupon không đổi khi transfer | Baseline principle |
+| BR-015 | Giá giao dịch độc lập mệnh giá | Baseline principle |
+| BR-016 | Transfer không đổi supply | Baseline principle |
+| BR-017 | Transfer không đổi nghĩa vụ Borrower | Baseline principle |
+| BR-018 | Quyền lợi tương lai và rủi ro chuyển sau settlement | Baseline principle |
+| BR-019 | Accrued interest theo chính sách định trước | Open method |
+| BR-020 | Listing chưa settlement thuộc Seller | Baseline principle |
+| BR-021 | Không bảo đảm thanh khoản | Baseline principle |
+| BR-022 | Bank không mặc nhiên mua lại | Baseline principle |
+| BR-023 | Distribution không vượt tiền khả dụng | Confirmed principle; Phase 3 formula pending |
+| BR-024 | Tổng loss phân bổ bằng loss xác nhận | Confirmed principle; Phase 3 formula pending |
+| BR-025 | Không xử lý giao dịch tài chính trùng | Baseline principle |
+| BR-026 | Mọi giao dịch tài chính truy vết được | Baseline principle |
+| BR-027 | Khoản vay không hủy vì bán không hết | Baseline principle |
+| BR-028 | Dữ liệu và dòng tiền mô phỏng | Baseline principle |
+| BR-029 | Một Issuer; Payment Bank có thể khác Issuer | Baseline principle |
+| BR-030 | Không cấp tín dụng trong CreditForge | Baseline principle |
+| BR-031 | Không phát hành trùng/vượt quyền lợi đủ điều kiện | Baseline control; detail pending |
+| BR-032 | Không cash wallet, deposit, withdraw | Baseline principle |
+| BR-033 | Payment cần authorization hợp lệ | Baseline principle |
+| BR-034 | Tiền Primary đến Issuer | Baseline principle |
+| BR-035 | Tiền Secondary đến Seller | Baseline principle |
+| BR-036 | Transfer sau payment hợp lệ và đáp ứng điều kiện settlement | Baseline control; detail pending |
+| BR-037 | Không over-reserve/double-sale | Baseline control; detail pending |
+| BR-038 | Investor accrual từ khi mua hoàn tất | Confirmed principle; Phase 3 formula pending |
+| BR-039 | Bank chi gốc/lãi/recovery trực tiếp Investor đã xác minh | Baseline principle |
+| BR-040 | Distribution khác Payout; pending payout không phải cash balance | Baseline principle |
+| BR-041 | Chỉ ghi đã chi khi có confirmation | Baseline control; detail pending |
+| BR-042 | Payment/refund/payout đối soát và idempotent | Baseline control; detail pending |
+| BR-043 | Không tự release token đã thanh toán khi nghĩa vụ chưa giải quyết | Baseline control; detail pending |
+| BR-044 | Không lưu PIN, OTP, mật khẩu ngân hàng | Baseline control; detail pending |
+| BR-045 | Không tùy ý sửa/xóa giao dịch hoàn tất; điều chỉnh có truy vết | Baseline control; detail pending |
+
+### 2.6.3 New rules derived from approved review gates
+
+| ID | Rule | Decision / source | Use case |
+|---|---|---|---|
+| BR-046 | One identified collateral cannot secure more than one registered loan with outstanding secured obligations at a time; confirmed release required before reuse. | BD-007-R1 | UC-001,018 |
+| BR-047 | Exactly one collateral asset per registered loan. | BD-016 | UC-001 |
+| BR-048 | Issuer Officer submits, distinct Issuer Approver approves internally, Marketplace Operator reviews publication. | BD-006-R1 | UC-001–004 |
+| BR-049 | Reviewer and settlement operator capabilities belong to combined Marketplace Operator role; System Admin remains separate. | BD-014 | UC-003,012,015,020 |
+| BR-050 | One issuance and one Primary Offering per loan; no top-up or reopening closed offering. | BD-015 | UC-004,011 |
+| BR-051 | Eligible loan already disbursed, current, positive outstanding principal; pre-issuance partial principal repayment allowed if remaining schedule compatible. | BD-017 | UC-001,004 |
+| BR-052 | Issuance uses eligible outstanding principal at effective issuance date, not original principal or repaid principal. | BD-017 | UC-001,004 |
+| BR-053 | Buyer may purchase part or all of available secondary listing in whole units. | BD-018 | UC-009 |
+| BR-054 | Issuer Officer manually records actual external repayment receipt with unique reference; CreditForge does not collect borrower cash. | BD-013 | UC-013 |
+| BR-055 | Distinct Issuer Approver confirms repayment/recovery evidence before allocation. | BD-019 | UC-014,017 |
+| BR-056 | Confirmed overdue alone does not prevent primary/secondary trades; disclose risk and enforce other eligibility. | BD-020 revised | UC-005,007–009,016 |
+| BR-057 | Stop new trades on default, recovery, maturity or closure; resolve existing orders separately. | BD-020 revised | UC-011,012,016,018 |
+| BR-058 | Closing Offering prevents new orders; valid existing reservations may complete through original deadline if otherwise eligible. | BD-021 | UC-007,011 |
+| BR-059 | Seller can cancel only unreserved remainder; outstanding reservations survive cancellation until resolved. | BD-022 | UC-010 |
+| BR-060 | Investor cannot purchase own listing; check buyer and seller owner identity, not merely display name. | BD-023 | UC-009 |
+| BR-061 | To change price, cancel unreserved remainder and create new listing; no in-place price changes in MVP; reserved order price unchanged. | BD-024 | UC-008,010 |
+| BR-062 | New verified receiving account applies only to newly created payment/payout instructions; existing instructions retain original destination. | BD-025 | UC-006,009,015 |
+| BR-063 | Officer proposes actual overdue/cure/default status with evidence; distinct Approver confirms. Missing receipt is a warning, not confirmed status. | BD-026 | UC-016 |
+| BR-064 | Buyer must explicitly acknowledge overdue risk before authorizing payment in either market. | BD-027 | UC-007,009 |
+
+BR-046–064 reflect confirmed policy; technical implementation and detailed evidence validation are pending. Exclusive collateral is project eligibility, not a general legal prohibition. Self-purchase prevention does not prove prevention of multi-account wash trading. Account changes do not authorize rerouting already submitted external payments.
+
+### 2.6.4 Proposed controls for unresolved operational details
+
+| ID | Proposed rule | Status / dependency |
+|---|---|---|
+| BR-065 | Both offering approvals bind to one material version; changed principal/terms invalidate approvals before issuance. | Proposed; Gate 06 BD-028 |
+| BR-066 | Order snapshots quantity, unit price, amount, payee and risk status; risk acknowledgement binds to material disclosure version; change before payment requires renewed consent. | Proposed; Gate 06 BD-029 |
+| BR-067 | If risk materially changes after authorization, verify payment status and route to reconciliation; never assume buyer consent, release paid reservation or silently redirect money. | Proposed; Gate 06 BD-029 |
+| BR-068 | A reservation is a subset of listing lock; release after expiry only when external nonpayment is definitive; unknown status blocks release until reconciliation. | Proposed control; Gate 06 BD-030 |
+| BR-069 | If original receiving account cannot receive payment, verify old instruction terminal failure/no transfer before creating a new authorized attempt to newly verified destination; retain both records. | Proposed; Gate 06 BD-031 |
+| BR-070 | Approved financial facts are not edited in place; correction is a traceable separately authorized adjustment that preserves previous postings and avoids duplicate payout. | Proposed detail of BR-045; correction workflow pending |
+
+### 2.6.5 Decision table — new trade eligibility
+
+These checks are cumulative, not alternative; overdue permission never overrides a closed offering, suspended asset, unavailable quantity or missing verification.
+
+| Condition | New primary order | New secondary listing/order |
+|---|---|---|
+| Active, otherwise eligible | Allowed if offering open | Allowed if holdings/listing eligible |
+| Verified overdue, otherwise eligible | Allowed if offering open; acknowledgement before payment | Allowed; acknowledgement before payment |
+| Missing repayment record only | Do not automatically classify overdue; flag for issuer review | Same; separate verified suspension rules may apply |
+| Defaulted / Recovery / Matured / Closed | Denied | Denied |
+| Independent valid suspension | Denied for affected source | Denied for affected source |
+| Offering closed but loan otherwise eligible | Denied new primary orders | Independent secondary trading remains eligible |
+
+Existing orders: BD-021 applies only to otherwise eligible reservations within their original deadline. BD-022 protects outstanding reserved units. Risk/status change and payment uncertainty are handled separately; a completed trade is not retroactively undone by a later default.
+
+### 2.6.6 Quantity and cash invariants
+
+Let H be seller holdings in a token class, L total currently locked for listings (including reserved units), R reservations within L, and A unreserved listed quantity. For one listing, remaining locked quantity = A + R. Across listings, 0 <= total L <= H; free unlisted quantity = H - total L. No double deduction of R. For an order, quantity is positive whole units; total payment = quantity × agreed unit price, excluding fees unless later approved. Settlement reduces seller holding and corresponding lock/reservation and increases buyer holding by equal quantity; total outstanding supply unchanged by transfer.
+
+Example: H = 1,000, L = 1,000, R = 300, A = 700. Cancel unreserved remainder: L = 300, R = 300, A = 0, free = 700. Successful settlement: seller H = 700, L = R = 0; buyer increases by 300. If definitively unpaid instead, seller H = 1,000 and cancelled listing does not reopen.
+
+Financial checks: total issued tranche principal matches eligible issued principal; total allocated cash does not exceed available confirmed receipts; recognized losses reconcile to allocated losses; payout confirmation cannot create a second entitlement. Bank's retained interest/principal allocations do not require external transfer to itself. No internal cash balance.
+
+All quantities and accounting semantics are logical, not a schema. Principal amortization after issuance, accrual and rounding are Phase 3 topics.
+
+### 2.6.7 Rule acceptance scenarios
+
+| ID | Given / When | Expected | Rules |
+|---|---|---|---|
+| RT-001 | Same collateral attached to another outstanding registered loan | Registration/issuance blocked; review evidence | 046,047 |
+| RT-002 | Loan originated 6bn, repaid 2bn before issuance | No more than 4bn eligible gốc; no replay of old receipts | 051,052 |
+| RT-003 | Officer attempts own approval | Denied | 048,055,063 |
+| RT-004 | Approved offering principal changes before issuance | Reapproval under proposed control | 065 |
+| RT-005 | Same issuance attempted again | No duplicate supply or second offering | 050,031 |
+| RT-006 | Listing 1,000; buyer reserves 300; seller cancels | 700 released; 300 protected | 053,059 |
+| RT-007 | Seller changes price with pending order | New listing for cancelled unreserved units; pending price unchanged | 061 |
+| RT-008 | Same owner attempts own listing purchase | Rejected before payment | 060 |
+| RT-009 | Overdue loan, buyer declines acknowledgement | No payment authorization | 056,064 |
+| RT-010 | Overdue loan, buyer acknowledges and otherwise eligible | May proceed; no guarantee of settlement or repayment | 056,064 |
+| RT-011 | Defaulted or matured loan | No new trades | 057 |
+| RT-012 | Offering closes, valid existing order remains eligible | May complete within original deadline | 058 |
+| RT-013 | Buyer paid; callback duplicated or settlement fails | At most one transfer; unresolved obligation preserved | 025,036,043 |
+| RT-014 | Payment status unknown after reservation expiry | Under proposed control no release until reconciled | 068 |
+| RT-015 | Investor changes receiving account during submitted payout | Existing destination remains; new instructions use verified new account | 062 |
+| RT-016 | No manual receipt on due date | Alert for dual status review, not automatic overdue/default | 063 |
+| RT-017 | Officer enters repayment; Approver rejects | No distribution or payout | 054,055 |
+| RT-018 | Same approved receipt replayed | No duplicate distribution | 025,055 |
+| RT-019 | Payout fails | Payable remains outstanding, not spendable balance | 039–042 |
+| RT-020 | Confirmed principal loss exceeds Junior | Junior first; Senior pari passu; allocated sum equals confirmed loss | 006,008,009,024 |
+
+These are proposed business acceptance tests, not executed software tests.
+
+### 2.6.8 Review Gate 06 — remaining operational decisions
+
+| ID | Decision | Recommended option |
+|---|---|---|
+| BD-028 | What if loan principal or material terms change after approval but before issuance? | Invalidate affected approvals and submit new version; do not issue on stale data. |
+| BD-029 | What if credit risk changes after Buyer creates an order? | Before authorization require refreshed disclosure/consent if materially changed; after authorization reconcile before deciding settlement/refund; never assume consent or automatic refund. |
+| BD-030 | How long reserve token for checkout? | Proposed 10-minute payment window; release only after verified terminal nonpayment. Unknown payment remains protected pending reconciliation. Fixed duration is configurable proposal, not industry standard. |
+| BD-031 | What if payout destination is closed or invalid? | Keep unpaid entitlement; verify terminal nonpayment before creating authorized retry to newly verified account; no silent rerouting or new entitlement. |
+
+Four recommendations awaiting owner review. BD-030 duration is illustrative and needs simulation/testing; external finality and late-payment semantics remain to specify. BD-031 does not promise real bank reversal. Detailed correction approvals, retry limits and exception SLAs remain open.
+
+### 2.6.9 Financial model handoff
+
+Phase 2.7 will verify primary-source mechanisms from Centrifuge/Tinlake, Goldfinch, Maple and Mintos. Phase 3 will specify: eligible principal and denomination/rounding; repayment structure after issuance; ACT/365 or other day count; tranche sizing and coupon feasibility; accrued interest and overdue interest on transfer; allocation of insufficient cash, costs, interest and principal; grace/default and impairment; recovery finality and loss allocation; redemption and performance calculation. Do not adopt example 80/20, 8%, 12% or 7-day grace as universal policy. No formula research claimed completed here.
+
+## 2.7–2.8 Pending
+
 - 2.7 Financial Model Research (primary-source verification required)
 - 2.8 BRD Consolidation & Review
 
@@ -570,3 +735,4 @@ No final MVP commitment, database schema or validated financial formulas in this
 | 0.3 | Confirm Gate 03 with Outstanding Principal eligibility; draft BP-001–009 and Gate 04 |
 | 0.4 | Confirm Gate 04; add RWA/credit marketplace research for BD-020 and UC-001–021; draft Gate 05 |
 | 0.5 | Revise BD-020 from pause to allow overdue trading with warnings; update process/use cases and acceptance scenarios; retain BD-019/021/022; Gate 05 pending |
+| 0.6 | Confirm BD-023–027; consolidate BR-001–070; add decision traceability, rule tests and Gate 06 |
