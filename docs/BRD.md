@@ -1,11 +1,11 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 0.1 — Draft for review  
+**Version:** 0.2 — Gate 02-R1 confirmed; domain model draft  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
-**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis. Remaining sections pending.
+**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling.
 
-Confirmed = inherited from approved baseline; Proposed = recommendation awaiting review. This draft does not change the approved baseline.
+Confirmed = inherited from approved baseline or explicitly approved review gate; Proposed = recommendation awaiting review. This draft does not change the approved baseline.
 
 ## 2.1 Business Context & Objectives
 
@@ -70,7 +70,7 @@ These are product verification criteria, not validated market KPIs. No commercia
 
 ### 2.1.4 Constraints and assumptions
 
-Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Proposed: one collateral per active loan, one initial issuance per loan, no prior principal repayments at registration, detailed Maker–Checker scope. Exact financial conventions, eligibility, payment finality and role assignments remain open. Time, team and grading rubric not confirmed.
+Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Proposed: one initial issuance per loan, no prior principal repayments at registration, detailed controls for sensitive financial facts. Exact financial conventions, eligibility, payment finality and role assignments remain open. Time, team and grading rubric not confirmed.
 
 ## 2.2 Stakeholder Analysis
 
@@ -101,7 +101,7 @@ Influence ratings are analyst assessments, not stakeholder interview results.
 
 Payment System is an external system actor (ACT-008), not a human role. Borrower and bank credit-underwriting staff are not required direct actors. Financial Engine is an internal automated component, not an external actor.
 
-Proposed MVP: combine Marketplace Reviewer and Settlement Operator in one Marketplace Operator role if necessary, preserve action permissions and separation from issuer; Auditor can be a scoped read-only permission. Issuer Approver separation adds control but also scope; do not claim independent internal review if omitted. Three portals can share code and layout.
+Confirmed at Gate 02-R1: ACT-004 and ACT-005 are capability groups assigned to one Marketplace Operator role, with distinct action permissions and separation from issuer; ACT-003 remains separate from ACT-002. Auditor remains optional scoped read-only permission. Three portals can share code and layout.
 
 ### 2.2.3 Responsibility matrix (proposed)
 
@@ -139,7 +139,7 @@ Junior retention reduces but does not eliminate moral hazard. Direct payment doe
 
 Investor sees approved asset summary, issuer, borrower business information permitted for publication, collateral summary, LTV, terms, tranche, status, risk, available listings and own transactions. Not full credit files, internal review notes, unrelated investor holdings or full bank details. Payment routing data is limited to necessary authorized participants. Seller cannot edit canonical loan data. Issuer accesses its assets and necessary servicing/payout information. Operator accesses records required for its assigned duties. Auditors have scoped read-only access. No real personal/bank data in public repo or demo.
 
-### 2.2.6 Review Gate 02-R1 — pending decisions
+### 2.2.6 Review Gate 02-R1 — confirmed decisions
 
 | ID | Question | Recommendation | Trade-off |
 |---|---|---|---|
@@ -148,11 +148,164 @@ Investor sees approved asset summary, issuer, borrower business information perm
 | BD-013 | How is external repayment recorded? | Issuer records confirmed receipt; mock external reference and duplicate check; approval for sensitive records | Less integration scope than full mock Core Banking event system; still automatic waterfall/payout |
 | BD-014 | How to scope operator roles? | One Marketplace Operator for review and exception monitoring, distinct System Admin, optional read-only auditor | Reduces screens; action permissions and financial controls remain separate |
 
-BD-008 is superseded: agreement acceptance happens outside the platform. Decisions above are not confirmed.
+BD-008 is superseded: agreement acceptance happens outside the platform. All four decisions in this table were confirmed by the project owner on 2026-11-27. The simpler alternatives are not the selected model.
 
-## 2.3–2.8 Pending
+Dual approval applies to the same version of offering terms. Proposed control: material changes invalidate prior approvals; reviewers return rather than edit submitted terms. Manual repayment recording means issuer records a confirmed external receipt, not a forecast or invented cash; unique reference and verification precede automatic allocation. Combined Marketplace Operator cannot approve issuer proposals on behalf of issuer or override calculated entitlements. Detailed approval of repayment/recovery facts remains open.
 
-- 2.3 Business Domain Modeling
+### 2.2.7 Collateral reuse research and rationale
+
+Vietnamese Civil Code 2015 (Law 91/2015/QH13), Article 296 permits one asset to secure multiple obligations subject to value conditions and exceptions by agreement or law; disclosure to subsequent secured parties is required. Enforcement can affect other secured obligations. Article 308 governs payment priority, including effectiveness against third parties and possible agreements on priority. Sources: [Civil Code 2015](https://btllang.mod.gov.vn/van-ban/vbpq-do-nha-nuoc-ban-hanh/5001-bo-luat-dan-su-2015.html), [Article 308 text](https://thuvienphapluat.vn/van-ban/Quyen-dan-su/Bo-luat-Dan-su-2015-296215.aspx).
+
+Public bank evidence checked 2026-11-27:
+- [Hong Leong Bank Vietnam](https://www.hlbank.com.vn/vi/personal-banking/blog/vay-tieu-dung-co-tai-san-dam-bao.html): consumer lending guidance acknowledges concurrent use under value conditions.
+- [Techcombank TOP UP](https://techcombank.com/thong-tin/thong-bao/top-up-da-tien-ich-nay-con-nhieu-uu-dai-hon): historical programme permitted reuse and additional collateral where needed; page marked expired. Not proof of current corporate policy.
+- [Vietcombank loan FAQ](https://www.vietcombank.com.vn/vi-VN/KHCN/Lien-he-va-Ho-tro/Danh-sach-cau-hoi-theo-chu-de-Vay): insufficient public evidence for current corporate collateral reuse policy. Individual bank approval/contract conditions remain unknown.
+
+BD-007-R1 is a CreditForge eligibility restriction, not Vietnamese law: each collateral asset may secure at most one registered loan with an outstanding secured obligation at a time. Sequential reuse after confirmed release is allowed in principle. Multiple assets securing one loan is a separate open decision. The platform must reject overlapping active pledges of the same asset and require issuer evidence of exclusivity; it cannot discover undisclosed external liens. If external shared security becomes known, flag for review and suspend new issuance/trading as appropriate; do not silently assume full recovery.
+
+Example: asset 10bn secures Loan A 4bn and Loan B 2bn. Combined principal-to-value is 60%, but recovery 4bn cannot be counted twice. A cross-loan priority allocation would be needed before each loan's Senior/Junior waterfall. This complexity is excluded; cross-default and shared recovery are not modeled.
+
+## 2.3 Business Domain Modeling — proposed
+
+### 2.3.1 Ubiquitous language
+
+| Domain concept | Meaning and responsibility |
+|---|---|
+| Issuer | Single originating and issuing bank; organization, not a staff account |
+| Borrower | External company reference, not a platform login |
+| Credit Asset / Loan | Registered existing loan; authoritative contractual terms and outstanding principal reference |
+| Collateral | Identified physical asset and dated valuation evidence, not a tokenized ownership interest |
+| Security Assignment | Association between collateral and loan with effective/released status; enforces exclusive active use |
+| Offering Proposal / Approval | Versioned investment terms and decision evidence from issuer and marketplace |
+| Tranche | Senior or Junior priority and outstanding principal rights |
+| Token Class | Fungible units for one loan and tranche; face value, supply and contractual coupon/residual rule |
+| Offering | Issuer primary sale of available Senior units |
+| Holding | Owner's quantity and remaining principal rights in a token class |
+| Ownership Event | Issuance, transfer or retirement with effective time; supports historical accrual |
+| Listing | Seller's fixed-price offer backed by locked holdings |
+| Purchase Order | Buyer commitment to quantity and price; primary or secondary source |
+| Reservation | Temporary allocation of units to one order; distinct from listing lock |
+| Payment Request | Authorized external money movement instruction/reference |
+| Payment Confirmation | Evidence of external payment, not ownership transfer |
+| Settlement | Completion of verified purchase and ownership transfer exactly once |
+| Refund | Separate external return of money, not DB rollback |
+| Receiving Account | Verified simulated bank destination; no cash balance in CreditForge |
+| Repayment Receipt | Confirmed external borrower payment manually recorded by issuer |
+| Interest Entitlement | Earned financial right for ownership interval; not necessarily paid |
+| Distribution | Allocation of an available receipt to entitled holders |
+| Payout | External bank execution/confirmation of allocated amount |
+| Default Case | Confirmed credit event and status history |
+| Recovery Receipt | Confirmed net recovery attributable to the loan |
+| Loss Allocation | Recognized loss assigned to remaining rights according to waterfall |
+| Ledger / Audit Event | Traceable financial facts and operational decisions; not a customer wallet |
+
+### 2.3.2 Conceptual relationships
+
+```mermaid
+flowchart TD
+ I[Issuer] --> L[Loan / Credit Asset]
+ B[Borrower] --> L
+ C[Collateral] --> A[Security Assignment]
+ A --> L
+ L --> V[Offering Proposal and Approvals]
+ V --> T[Senior and Junior Tranches]
+ T --> K[Token Class]
+ K --> O[Primary Offering]
+ K --> H[Holdings and Ownership Events]
+ H --> S[Secondary Listing]
+ O --> Q[Purchase Order]
+ S --> Q
+ Q --> R[Reservation]
+ Q --> P[Payment Request and Confirmation]
+ P --> X[Settlement]
+ X --> H
+ P --> F[Refund if required]
+ L --> M[Repayment Receipt]
+ L --> D[Default Case]
+ D --> N[Recovery Receipt]
+ M --> W[Distribution]
+ N --> W
+ N --> Z[Loss Allocation]
+ H --> W
+ H --> Z
+ W --> Y[Bank Payout]
+ Y --> E[Verified Receiving Account]
+```
+
+This is a business relationship diagram, not a database schema. Arrows do not represent cash custody or mandatory chronological order.
+
+| Relationship | Cardinality / rule |
+|---|---|
+| Issuer to Loan | 1:N |
+| Borrower to Loan | 1:N; no borrower user account |
+| Collateral to Security Assignment | 1:N historical; at most one active loan per asset (confirmed) |
+| Loan to Collateral | At least one eligible collateral; exact maximum pending |
+| Loan to Tranche | Exactly two once issued |
+| Tranche to Token Class | One per tranche proposed for MVP |
+| Token Class to Holding | 1:N; bank retains Junior and initially owns issued Senior |
+| Loan to issuance | One initial issuance proposed; top-ups excluded if accepted |
+| Token Class to Offering | One primary offering proposed; closure/reopening policy pending |
+| Holding to Listing | 1:N subject to available quantity |
+| Order to source | Exactly one primary Offering OR secondary Listing |
+| Order to Reservation | One logical reservation proposed; never double-count listing locks |
+| Order to payment attempts | 1:N possible attempts, at most one accepted settlement; policy pending |
+| Receipt to Distribution | One logical allocation run per receipt/version; multiple entitlement lines |
+| Entitlement to Payout | One logical payable, potentially multiple attempts; retry never creates new entitlement |
+| Loan to Repayment/Recovery Receipt | 1:N; recovery finality and partial recovery policy pending |
+
+### 2.3.3 Domain boundaries
+
+| Business domain | Owns | Does not own |
+|---|---|---|
+| Credit Asset & Issuance | Loan reference, collateral assignments, approved terms, tranche and issuance | Actual credit approval/disbursement |
+| Marketplace | Offering, Listing, Order, Reservation | Bank money or financial allocation formulas |
+| Ownership Registry | Holdings and historical ownership changes | Payment authorization |
+| Payment & Settlement | Payment evidence, coordination, exception/refund and reconciliation | Bank account balances; unilateral debit |
+| Loan Servicing & Finance | Receipts, accrual, distribution, default/recovery/loss | Physical recovery, external transfers |
+| Payout | Payable instructions, attempts, confirmed execution | Creation of additional entitlement on retry |
+| Identity & Governance | User roles, issuer identity, approvals, audit and receiving account verification | Arbitrary override of financial records |
+
+Boundaries are logical; not a mandate for microservices.
+
+### 2.3.4 Lifecycle distinctions (proposed)
+
+- Credit Asset registration: Draft → Submitted → Reviewed/Rejected → Eligible. Loan servicing status is separate: Active, Overdue, Defaulted, Recovery, Closed.
+- Offering proposal: Draft → Issuer Approved → Marketplace Approved → Published; return/reject and version changes handled separately.
+- Offering: Scheduled/Open → Closed or Suspended. Closure does not cancel loan.
+- Listing: Active → Filled/Cancelled/Expired/Suspended. Pending orders resolved before releasing their reservations.
+- Order: Pending → Completed/Cancelled/Expired or exception; Payment and Settlement have independent states.
+- Payment: Requested → Pending → Confirmed/Failed; late/ambiguous confirmation enters reconciliation. Refund is separate.
+- Settlement: Pending → Completed or Exception; confirmed payment cannot be treated as unpaid.
+- Distribution: Calculated/Posted; Payout: Pending/Confirmed/Failed. An allocated right is not cash available to spend.
+- Collateral assignment: Active → Released only after evidence of release and no remaining secured obligation; loan registration closure and legal release are not identical.
+
+Exact transitions, permissions, time cutoffs and exception conditions belong in 2.4 and 2.6.
+
+### 2.3.5 Domain invariants and edge cases
+
+- Unique external loan and receipt references in issuer scope; same collateral cannot be duplicated by cosmetic ID changes. Asset identity method remains to be specified.
+- Approved terms must remain consistent with issued rights; approval version is proposed.
+- Total issued principal = Senior + Junior; holding quantities reconcile to outstanding token supply. Bank holding is an actual recorded position, not inferred from offering sales.
+- Reserved quantity is part of locked listing quantity where applicable, not an additional independent deduction. Seller remains owner until completed settlement.
+- Payment confirmation does not change ownership by itself. Settlement applies at most once; external payment cannot be rolled back by the database.
+- Repayment receipt, distribution and payout are separate facts; no duplicate allocation or disbursement. Failed payout remains payable.
+- Ownership effective time determines future accrual; treatment of earned but unpaid interest remains open.
+- Final recovery may create losses, but an interim recovery alone is not proof of final loss. Partial recovery/loss recognition policy remains open.
+- Loan maturity is not equivalent to repayment or closure. Token retirement and unresolved payouts require separate rules.
+
+### 2.3.6 Review Gate 03 — proposed decisions
+
+| ID | Decision | Recommendation |
+|---|---|---|
+| BD-015 | Initial issuance model | One issuance and one primary offering per loan; no top-up or reopening in MVP |
+| BD-016 | Collateral cardinality per loan | One asset per loan in MVP; retain historical assignment and release records |
+| BD-017 | Eligible loan at registration | Already disbursed, current, no prior principal repayment; capture payment history needed for accrual |
+| BD-018 | Listing fill model | Allow partial purchases by multiple buyers, with order-specific reservations |
+
+All four are proposed, not confirmed. A borrower may still have multiple loans with distinct collateral. Financial rules and exact state machines remain pending.
+
+## 2.4–2.8 Pending
+
 - 2.4 Business Process Modeling
 - 2.5 Business Use Cases
 - 2.6 Business Rules Analysis
@@ -166,3 +319,4 @@ No final MVP commitment, database schema or validated financial formulas in this
 | Version | Change |
 |---|---|
 | 0.1 | Re-baseline Business Context and Stakeholder Analysis against Idea Specification v2.1; Review Gate 02-R1 pending |
+| 0.2 | Confirm Gate 02-R1; document collateral reuse research; add proposed Business Domain Model and Gate 03 |
