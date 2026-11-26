@@ -1,9 +1,9 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 0.6 — Gate 05 confirmed; business rules draft  
+**Version:** 0.7 — Gate 06 confirmed; financial model research draft  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
-**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases; 2.6 Business Rules Analysis.
+**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases; 2.6 Business Rules Analysis; 2.7 Financial Model Research.
 
 Confirmed = inherited from approved baseline or explicitly approved review gate; Proposed = recommendation awaiting review. This draft does not change the approved baseline.
 
@@ -70,7 +70,7 @@ These are product verification criteria, not validated market KPIs. No commercia
 
 ### 2.1.4 Constraints and assumptions
 
-Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Confirmed at Gate 03: one issuance and offering per loan, one collateral per loan, eligibility based on outstanding principal including partially repaid loans, partial listing fill. Confirmed at Gate 04: dual approval of repayment/recovery receipts, allow trading on verified overdue with risk disclosure; stop new trading on default or maturity, honor eligible existing orders at offering closure, cancellation of unreserved listing remainder. Confirmed at Gate 05: prohibit self-purchase; cancel/relist to change price; snapshot verified receiving accounts for existing instructions; dual approval of loan status; explicit overdue-risk acknowledgement. Exact financial conventions, payment finality and detailed eligibility remain open. Time, team and grading rubric not confirmed.
+Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Confirmed at Gate 03: one issuance and offering per loan, one collateral per loan, eligibility based on outstanding principal including partially repaid loans, partial listing fill. Confirmed at Gate 04: dual approval of repayment/recovery receipts, allow trading on verified overdue with risk disclosure; stop new trading on default or maturity, honor eligible existing orders at offering closure, cancellation of unreserved listing remainder. Confirmed at Gate 05: prohibit self-purchase; cancel/relist to change price; snapshot verified receiving accounts for existing instructions; dual approval of loan status; explicit overdue-risk acknowledgement. Confirmed at Gate 06: reapprove material changes, revalidate changing credit risk, 10-minute checkout, retry failed payout to newly verified destination after definitive nonpayment. Exact financial conventions, payment finality and detailed eligibility remain open. Time, team and grading rubric not confirmed.
 
 ## 2.2 Stakeholder Analysis
 
@@ -346,7 +346,7 @@ flowchart TD
  J --> K[Publish single Senior offering]
 ```
 
-Preconditions: existing disbursed current loan, positive eligible outstanding principal, one collateral, no overlapping active registered pledge, compatible remaining repayment schedule, unique reference. Prior principal repayments allowed. Issuer Officer submits; distinct Issuer Approver approves; Marketplace Operator checks eligibility/disclosure, not underwriting. Rejection records reason. Material changes require new approval (proposed control). Issuance is idempotent; Bank initially owns all issued units, retains Junior. No second issuance or reopening closed offering. Publication and issuance failures must not generate duplicate units; retry the same approved issuance. Opening snapshot distinguishes historical receipts from post-issuance entitlement.
+Preconditions: existing disbursed current loan, positive eligible outstanding principal, one collateral, no overlapping active registered pledge, compatible remaining repayment schedule, unique reference. Prior principal repayments allowed. Issuer Officer submits; distinct Issuer Approver approves; Marketplace Operator checks eligibility/disclosure, not underwriting. Rejection records reason. Material changes require new approval (BD-028). Issuance is idempotent; Bank initially owns all issued units, retains Junior. No second issuance or reopening closed offering. Publication and issuance failures must not generate duplicate units; retry the same approved issuance. Opening snapshot distinguishes historical receipts from post-issuance entitlement.
 
 ### 2.4.3 BP-003 — Primary purchase
 
@@ -457,7 +457,7 @@ Evidence limitation: Mintos overdue-funds article was read in full; some other o
 
 **Revised decision (Gate 04-R1):** supersede the previous pause-on-overdue choice. Allow new primary and secondary orders during issuer-confirmed overdue, with explicit risk warnings and all other eligibility checks. Stop new trades on default, recovery, maturity or closure. An already closed primary offering never reopens; an independent suspension for another valid reason is not overridden. Continue servicing, distributions, payout and reconciliation. A missing manual receipt alone is not proof of delinquency. This policy preserves a possible exit route, but does not guarantee liquidity and increases adverse-selection and unpaid-interest allocation risks. The reference research above is retained as historical context; it does not establish that this policy is an industry standard.
 
-Confirmed BD-027: require explicit buyer acknowledgement of overdue risk before payment authorization in either market. Proposed implementation controls: disclose verified overdue obligations, days overdue and last status update on asset, listing and checkout; bind acknowledgement to the disclosed status version; if material risk changes before settlement, revalidate and route unresolved orders to reconciliation, without automatic transfer or release of paid reservations. Do not assume consent to a changed risk profile. Exact treatment of already authorized/paid orders, information cutoffs and unpaid pre-transfer interest remains open. Distinguish delinquency from default and impairment; no new valuation model or guaranteed recovery is implied.
+Confirmed BD-027: require explicit buyer acknowledgement of overdue risk before payment authorization in either market. Confirmed BD-029 requires revalidation and renewed consent before authorization for material risk changes, and reconciliation after authorization. Proposed presentation details: disclose verified overdue obligations, days overdue and last status update on asset, listing and checkout; bind acknowledgement to the disclosed status version; if material risk changes before settlement, revalidate and route unresolved orders to reconciliation, without automatic transfer or release of paid reservations. Do not assume consent to a changed risk profile. Exact treatment of already authorized/paid orders, information cutoffs and unpaid pre-transfer interest remains open. Distinguish delinquency from default and impairment; no new valuation model or guaranteed recovery is implied.
 
 ## 2.5 Business Use Cases — Gate 05 reviewed; detailed specifications pending
 
@@ -529,11 +529,11 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 |---|---|
 | Existing loan 6bn, repaid 2bn before issuance | Issue no more than eligible 4bn; historical repayment not distributed |
 | Officer tries to approve own proposal or receipt | Denied |
-| Marketplace review of modified approved proposal | Prior approvals invalidated under proposed version control |
+| Marketplace review of modified approved proposal | Prior approvals invalidated under BD-028 |
 | Two buyers request more than remaining listed units | Only valid reservations accepted; no oversell |
 | Listing 1,000, order reserves 300, seller cancels | 700 unlocked; 300 preserved until resolved |
 | Offering closes while eligible order still valid | No new orders; existing valid order may settle before its deadline |
-| Verified overdue while order pending | New orders remain allowed with warnings if otherwise eligible; pending order risk changes reviewed under proposed control; no automatic release of paid reservation |
+| Verified overdue while order pending | New orders remain allowed with warnings if otherwise eligible; pending order risk changes reviewed under BD-029; no automatic release of paid reservation |
 | Verified overdue before new purchase | Primary/secondary orders allowed if otherwise eligible; explicit risk warning and required acknowledgement before payment |
 | Buyer attempts own listing | Denied before payment |
 | Seller reprices listing with pending order | Cancel unreserved remainder; create new listing; reserved price unchanged |
@@ -563,7 +563,7 @@ All five confirmed by project owner. Proposed implementation: record disclosed r
 
 ### 2.6.1 Rule governance
 
-A Business Decision (BD) records an agreed policy; a Business Rule (BR) constrains an operation; a Use Case (UC) describes an actor's goal; an Acceptance Scenario verifies observable results. Preserve baseline IDs BR-001–045, append new IDs and do not silently promote an analyst proposal to a confirmed policy. Confirmed principles may still require detailed formulas or implementation rules. Gate 05 confirmed the five choices; the four Gate 06 choices remain open.
+A Business Decision (BD) records an agreed policy; a Business Rule (BR) constrains an operation; a Use Case (UC) describes an actor's goal; an Acceptance Scenario verifies observable results. Preserve baseline IDs BR-001–045, append new IDs and do not silently promote an analyst proposal to a confirmed policy. Confirmed principles may still require detailed formulas or implementation rules. Gate 05 confirmed the five choices; Gate 06 confirms four additional operational decisions. BR-070 correction detail remains proposed.
 
 ### 2.6.2 Inherited baseline rules
 
@@ -641,15 +641,15 @@ A Business Decision (BD) records an agreed policy; a Business Rule (BR) constrai
 
 BR-046–064 reflect confirmed policy; technical implementation and detailed evidence validation are pending. Exclusive collateral is project eligibility, not a general legal prohibition. Self-purchase prevention does not prove prevention of multi-account wash trading. Account changes do not authorize rerouting already submitted external payments.
 
-### 2.6.4 Proposed controls for unresolved operational details
+### 2.6.4 Operational controls and remaining proposed detail
 
-| ID | Proposed rule | Status / dependency |
+| ID | Rule | Status / dependency |
 |---|---|---|
-| BR-065 | Both offering approvals bind to one material version; changed principal/terms invalidate approvals before issuance. | Proposed; Gate 06 BD-028 |
-| BR-066 | Order snapshots quantity, unit price, amount, payee and risk status; risk acknowledgement binds to material disclosure version; change before payment requires renewed consent. | Proposed; Gate 06 BD-029 |
-| BR-067 | If risk materially changes after authorization, verify payment status and route to reconciliation; never assume buyer consent, release paid reservation or silently redirect money. | Proposed; Gate 06 BD-029 |
-| BR-068 | A reservation is a subset of listing lock; release after expiry only when external nonpayment is definitive; unknown status blocks release until reconciliation. | Proposed control; Gate 06 BD-030 |
-| BR-069 | If original receiving account cannot receive payment, verify old instruction terminal failure/no transfer before creating a new authorized attempt to newly verified destination; retain both records. | Proposed; Gate 06 BD-031 |
+| BR-065 | Both offering approvals bind to one material version; changed principal/terms invalidate approvals before issuance. | Confirmed policy; BD-028 |
+| BR-066 | Order snapshots quantity, unit price, amount, payee and risk status; risk acknowledgement binds to material disclosure version; change before payment requires renewed consent. | Confirmed policy; BD-029 |
+| BR-067 | If risk materially changes after authorization, verify payment status and route to reconciliation; never assume buyer consent, release paid reservation or silently redirect money. | Confirmed policy; BD-029 |
+| BR-068 | A reservation is a subset of listing lock; checkout deadline is 10 minutes from order creation; release after expiry only when external nonpayment is definitive; unknown status blocks release until reconciliation. | Confirmed policy; BD-030 |
+| BR-069 | If original receiving account cannot receive payment, verify old instruction terminal failure/no transfer before creating a new authorized attempt to newly verified destination; retain both records. | Confirmed policy; BD-031 |
 | BR-070 | Approved financial facts are not edited in place; correction is a traceable separately authorized adjustment that preserves previous postings and avoids duplicate payout. | Proposed detail of BR-045; correction workflow pending |
 
 ### 2.6.5 Decision table — new trade eligibility
@@ -684,7 +684,7 @@ All quantities and accounting semantics are logical, not a schema. Principal amo
 | RT-001 | Same collateral attached to another outstanding registered loan | Registration/issuance blocked; review evidence | 046,047 |
 | RT-002 | Loan originated 6bn, repaid 2bn before issuance | No more than 4bn eligible gốc; no replay of old receipts | 051,052 |
 | RT-003 | Officer attempts own approval | Denied | 048,055,063 |
-| RT-004 | Approved offering principal changes before issuance | Reapproval under proposed control | 065 |
+| RT-004 | Approved offering principal changes before issuance | Reapproval required | 065 |
 | RT-005 | Same issuance attempted again | No duplicate supply or second offering | 050,031 |
 | RT-006 | Listing 1,000; buyer reserves 300; seller cancels | 700 released; 300 protected | 053,059 |
 | RT-007 | Seller changes price with pending order | New listing for cancelled unreserved units; pending price unchanged | 061 |
@@ -694,7 +694,7 @@ All quantities and accounting semantics are logical, not a schema. Principal amo
 | RT-011 | Defaulted or matured loan | No new trades | 057 |
 | RT-012 | Offering closes, valid existing order remains eligible | May complete within original deadline | 058 |
 | RT-013 | Buyer paid; callback duplicated or settlement fails | At most one transfer; unresolved obligation preserved | 025,036,043 |
-| RT-014 | Payment status unknown after reservation expiry | Under proposed control no release until reconciled | 068 |
+| RT-014 | Payment status unknown after reservation expiry | No release until reconciled | 068 |
 | RT-015 | Investor changes receiving account during submitted payout | Existing destination remains; new instructions use verified new account | 062 |
 | RT-016 | No manual receipt on due date | Alert for dual status review, not automatic overdue/default | 063 |
 | RT-017 | Officer enters repayment; Approver rejects | No distribution or payout | 054,055 |
@@ -704,25 +704,105 @@ All quantities and accounting semantics are logical, not a schema. Principal amo
 
 These are proposed business acceptance tests, not executed software tests.
 
-### 2.6.8 Review Gate 06 — remaining operational decisions
+### 2.6.8 Review Gate 06 — confirmed operational decisions
 
-| ID | Decision | Recommended option |
+| ID | Decision | Confirmed selection |
 |---|---|---|
 | BD-028 | What if loan principal or material terms change after approval but before issuance? | Invalidate affected approvals and submit new version; do not issue on stale data. |
 | BD-029 | What if credit risk changes after Buyer creates an order? | Before authorization require refreshed disclosure/consent if materially changed; after authorization reconcile before deciding settlement/refund; never assume consent or automatic refund. |
-| BD-030 | How long reserve token for checkout? | Proposed 10-minute payment window; release only after verified terminal nonpayment. Unknown payment remains protected pending reconciliation. Fixed duration is configurable proposal, not industry standard. |
+| BD-030 | How long reserve token for checkout? | 10-minute payment window; release only after verified terminal nonpayment. Unknown payment remains protected pending reconciliation. Configurable duration recommended; existing order deadline must not silently change. |
 | BD-031 | What if payout destination is closed or invalid? | Keep unpaid entitlement; verify terminal nonpayment before creating authorized retry to newly verified account; no silent rerouting or new entitlement. |
 
-Four recommendations awaiting owner review. BD-030 duration is illustrative and needs simulation/testing; external finality and late-payment semantics remain to specify. BD-031 does not promise real bank reversal. Detailed correction approvals, retry limits and exception SLAs remain open.
+All four decisions confirmed by project owner. BD-030 duration is confirmed at 10 minutes and needs simulation/testing; external finality and late-payment semantics remain to specify. BD-031 does not promise real bank reversal. Detailed correction approvals, retry limits and exception SLAs remain open.
 
 ### 2.6.9 Financial model handoff
 
-Phase 2.7 will verify primary-source mechanisms from Centrifuge/Tinlake, Goldfinch, Maple and Mintos. Phase 3 will specify: eligible principal and denomination/rounding; repayment structure after issuance; ACT/365 or other day count; tranche sizing and coupon feasibility; accrued interest and overdue interest on transfer; allocation of insufficient cash, costs, interest and principal; grace/default and impairment; recovery finality and loss allocation; redemption and performance calculation. Do not adopt example 80/20, 8%, 12% or 7-day grace as universal policy. No formula research claimed completed here.
+Phase 2.7 reviews primary-source mechanisms from Centrifuge/Tinlake, Goldfinch, Maple and Mintos. Phase 3 will specify: eligible principal and denomination/rounding; repayment structure after issuance; ACT/365 or other day count; tranche sizing and coupon feasibility; accrued interest and overdue interest on transfer; allocation of insufficient cash, costs, interest and principal; grace/default and impairment; recovery finality and loss allocation; redemption and performance calculation. Do not adopt example 80/20, 8%, 12% or 7-day grace as universal policy. Research findings are recorded in 2.7; final formulas remain Phase 3.
 
-## 2.7–2.8 Pending
+## 2.7 Financial Model Research — draft for review
 
-- 2.7 Financial Model Research (primary-source verification required)
+### 2.7.1 Research scope and method
+
+Research date: 2026-11-27. Examine official technical/product documentation for financial mechanisms, not blockchain implementation. CreditForge is a centralized, loan-specific, post-disbursement simulator, with a single issuer, fixed-price secondary transfers and direct bank payments. It does not pool investor money, originate loans, hold a reserve, offer guaranteed redemption, or implement real securities. Prior decisions including BD-020 allow trading of verified overdue loans with acknowledgement remain unchanged.
+
+Evidence tiers: A = full official text retrieved; B = official indexed extracts retrieved but direct full-page access failed or not attempted. No smart-contract audit, product-specific legal review, empirical risk calibration, or full replication. Each proposed CreditForge adaptation below is an analyst design, not a source formula.
+
+### 2.7.2 Reference findings
+
+| ID | Official source | Finding and evidence tier | Adaptation boundary |
+|---|---|---|---|
+| FM-R01 | [Centrifuge Legacy](https://docs.centrifuge.io/getting-started/legacy/), [Tinlake contracts](https://docs.centrifuge.io/tinlake/further-information/interest/), [pricing RWA](https://docs.centrifuge.io/tinlake/overview/pricing_rwa/) | B: historical Tinlake uses senior DROP and junior TIN, junior first-loss, senior accrual, pool NAV/reserve and share redemption. | Adopt priority and first-loss concept, not pool NAV, stablecoins, epoch redemption or changing share prices. |
+| FM-R02 | [Goldfinch V1 Overview](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/goldfinch-overview), [Liquidity Providers](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/liquidityproviders) | B: historical V1 borrower pools allocate repayments to senior obligations before junior; source describes interest redistribution and reserve deductions. | Adopt sequential priority as reference, not their fees, leverage ratios or funding model. Exact ordering inside senior interest/principal needs our own specification. |
+| FM-R03 | [Maple syrupUSDC/syrupUSDT Defaults and Impairments](https://docs.maple.finance/legal/syrupusdc-and-syrupusdt-defaults-and-impairments) | A: impairment can reflect deterioration before default; default after applicable grace period reduces pool value; collateral liquidation contributes recovery. | Separate overdue, default, estimated impairment and actual recovery. No pool NAV or withdrawal mechanism; no automatic loss solely because overdue. |
+| FM-R04 | [Maple Borrower MLA](https://docs.maple.finance/legal/borrower-mla), [Protocol Invariants](https://docs.maple.finance/technical-resources/security/protocol-invariants) | A (MLA), B (invariants): documented recovery priority is costs, principal, interest, fees; pro-rata lender allocation. | Consider net recovery and reconciliation. Not a universal rule and not a senior/junior recovery waterfall; do not import contractual order uncritically. |
+| FM-R05 | [Mintos loan secondary market](https://help.mintos.com/hc/en-us/articles/7221077647633-How-to-sell-loan-investments-on-the-Secondary-market), [exit investments](https://help.mintos.com/hc/en-us/articles/7221175394961-How-can-I-exit-my-investments) | B: eligible Notes may sell at par, discount or premium; exit requires buyer availability. | Fixed-price listing with partial fills; no guaranteed buyer, cash wallet or platform buyback. |
+| FM-R06 | [Mintos bond pricing](https://help.mintos.com/hc/en-us/articles/45705961040017-Understanding-bond-pricing-Premiums-discounts-and-accrued-interest) | A: distinguishes nominal, market price, accrued interest paid at purchase and annualized maturity yield; yield assumes cash flows and holding to maturity. | Compare clean/dirty pricing versus ownership-interval accrual; bond convention is not evidence of identical Notes rules. |
+
+Direct open of Tinlake interest and Goldfinch overview failed (cache and unsupported Markdown respectively); direct open of Mintos Notes secondary article failed (cache). Their findings are supported by official indexed text only. Maple full documentation and Mintos bond pricing full article were available. Historical Tinlake and Goldfinch V1 are deliberately labeled legacy references. No claim of current universal RWA practice.
+
+### 2.7.3 Adaptation matrix
+
+| Financial topic | Reference | CreditForge direction | Status |
+|---|---|---|---|
+| Tranche structure | FM-R01,02 | Loan-specific Senior and Junior; Bank holds all Junior and unsold Senior | Confirmed baseline |
+| Principal loss | FM-R01,02,04 | Junior first, Senior pari passu, pro rata by remaining rights | Confirmed principle; formula candidate below |
+| Interest waterfall | FM-R02 | Pay due Senior interest from available interest receipts, Junior residual only after due Senior interest; track unpaid amounts | Proposed; precise priority Phase 3 |
+| Default and recovery | FM-R03,04 | Issuer verified facts, external recovery, distinguish estimated vs final loss | Confirmed boundary; recognition timing pending |
+| Secondary pricing | FM-R05,06 | Seller fixes price independent of nominal; coupon unchanged | Confirmed |
+| Interest across transfer | FM-R06 | Prefer ownership-interval accrual, not paying Seller accrued interest upfront; compare both models | Proposed Phase 3 |
+| Investment return | FM-R06 | Show cash-flow-based scenario return separately from coupon and realized profit | Proposed Phase 3 |
+| Liquidity | FM-R01,05 | Buyer required; no pool redemption or automatic buyback | Confirmed |
+
+### 2.7.4 Candidate financial model: principal and interest
+
+Illustrative values only, not mandatory parameters. Collateral VND 10bn, eligible outstanding principal P=6bn, annual borrower rate 12%, Senior fraction 80%, Senior coupon 8%, nominal unit 100,000 VND. Senior S=4.8bn (48,000 units); Junior J=1.2bn (12,000 units). Issuance may also begin with an already partially repaid loan under BD-017. Candidate: use current eligible principal and require integral denomination/tranche quantities or reject incompatible issuance; decide rounding policy in Phase 3.
+
+Candidate simple ACT/365 Fixed: interest = outstanding principal × annual rate × actual elapsed days / 365; split at principal changes, ownership settlement and other accrual boundaries. Need explicit time zone, half-open intervals, day-count cutoff, rounding and handling same-day transfers. Do not count buyer accrual before settlement. For a full 365-day illustrative period with unchanged principal and full borrower payment: interest 720m; due Senior 384m; residual 336m (gross residual, not Bank net profit). If half Senior sold at start: external Senior 192m; retained Senior 192m; Junior residual 336m; Bank total 528m. Sum 720m. No payout to Bank itself required. Accrued interest is not realized income or spendable cash.
+
+Candidate normal repayment: monthly interest with bullet principal at maturity; admit only remaining schedules compatible with this policy. Pre-issuance amortization allowed under BD-017; scheduled post-issuance amortization is a separate scope choice. Early principal repayment must not be ignored: define full-prepayment path, and explicitly decide partial prepayment/unsupported schedule exception before implementation. Do not assume 30-day months or 12 equal interest amounts when ACT/365 applies.
+
+### 2.7.5 Candidate waterfall and recovery
+
+For an interest-only receipt, let C be confirmed available post-issuance interest cash, D total unpaid due Senior interest (including arrears if approved). Candidate Senior paid = min(C,D); Junior residual = C minus Senior paid, subject to eligible Junior rights and other confirmed obligations; unmet Senior interest remains outstanding. Allocate among eligible Senior accrued claims pro rata, with deterministic rounding; do not prioritize current holder over historical accrued claimant without a rule. Example C=20m, D=32m: Senior 20m, Junior 0, unpaid Senior 12m. This is an illustrative receipt-specific design, not Goldfinch's exact contract waterfall. Prior-period arrears ordering and costs require Phase 3 specification.
+
+Candidate principal-only final recovery: P=S+J denotes remaining principal immediately before recovery; R is cumulative net principal recovery for that basis, bounded 0..P (excess separately handled). L=P-R; junior loss=min(L,J); senior loss=max(0,L-J); senior principal recovery=S-senior loss; junior recovery=J-junior loss. Do not mix interest, expenses or previously distributed recoveries into R; net costs and recovery classification must be documented. Recognize final loss only after verified final recovery/closure evidence under chosen policy; interim receipts and estimated impairment are distinct. If multiple interim principal receipts are permitted, specify how principal balances update and prevent counting the same recovery twice.
+
+Example P=6bn, S=4.8bn, J=1.2bn, net principal recovery=4bn: L=2bn; Junior loss=1.2bn; Senior loss=0.8bn; Senior recovery=4bn; Junior recovery=0. If 50% of outstanding Senior held externally, Investor loss=0.4bn and recovery=2bn; Bank loss=1.6bn and recovery=2bn. Sum recovery=4bn; sum loss=2bn; no Bank guarantee.
+
+Risk stress scenario (not loss recognition or probability): estimated net collateral proceeds = collateral valuation × (1 - assumed decline) × (1 - assumed sale-cost fraction). Compare against principal and tranche buffer. Hypothetical scenario only; valuation is not cash. No automatic default or trading freeze from stress estimate.
+
+### 2.7.6 Candidate ownership and secondary market return
+
+Mintos bond model compensates Seller for accrued interest in purchase price, and Buyer collects entire next coupon subject to payment. CreditForge alternative: Seller retains accrued claim for pre-settlement interval; Buyer accrues after completed settlement; Bank pays both eligible claimants from actual receipts. No upfront accrued interest payment under this candidate. Listing price is the agreed consideration for future rights, not automatic clean/dirty price. Explicitly disclose which unpaid claims remain with Seller, including overdue interest, and distinguish retained claims from token ownership. Example nominal 100,000, rate 8%, period 365 days: Seller held 60 days and Buyer 305; unrounded accrual 1,315.068 and 6,684.932, sum 8,000; if fully paid and rounded to whole VND with reconciliation, 1,315 and 6,685. Neither accrual guarantees cash. If insufficient receipt, historical claims and current holder claims need deterministic priority and allocation. No double counting across transfers. This choice is not confirmed merely because BR-038 confirms future accrual starts at settlement.
+
+Example secondary price for one 100,000 nominal token with six months of future interest approximated as 4,000, no past claims, no loss/fees/tax and full payment:
+| Price | Future total receipts | Scenario profit | Holding-period return |
+|---:|---:|---:|---:|
+| 95,000 | 104,000 | 9,000 | 9.47% |
+| 100,000 | 104,000 | 4,000 | 4.00% |
+| 105,000 | 104,000 | -1,000 | -0.95% |
+
+Holding-period return=(cash received minus purchase cost)/purchase cost for this simple hold-to-maturity scenario; not annualized, not YTM, not guaranteed. Realized return requires actual cash flows, fees if any, acquisition cost basis and disposal attribution. Estimated return under default must disclose assumptions. Coupon is contractual rate on principal, not investment return on market price.
+
+### 2.7.7 Research review and Phase 3 decision backlog
+
+| Candidate ID | Topic | Analyst recommendation (not confirmed) |
+|---|---|---|
+| FM-C01 | Remaining repayment schedule | Monthly interest / bullet principal; define prepayment handling |
+| FM-C02 | Day count | Simple ACT/365 Fixed; define daily cutoff, same-day and rounding |
+| FM-C03 | Tranche terms | Issuer proposes ratio/coupon subject to financial eligibility, no universal 80/20 |
+| FM-C04 | Accrued rights at transfer | Ownership-interval accrual; Seller retains earned unpaid claims |
+| FM-C05 | Insufficient normal receipts | Senior due interest first, unpaid claim tracked, Junior receives eligible residual |
+| FM-C06 | Default and recovery | Separate status, interim recovery, final loss; define net recovery order and treatment of unpaid interest |
+| FM-C07 | Performance | Show nominal, cost, coupon, paid/pending and scenario return separately |
+| FM-C08 | Monetary precision | Whole VND settlement, deterministic allocation rounding, fixed precision calculations; exact method pending |
+
+Research review asks whether these reference mechanisms and boundaries are suitable as input to Phase 3, not approval of candidate formulas. Phase 3 must produce testable formulas, worked normal/default/partial receipt/trade examples, edge cases, rounding conservation and explicit acceptance decisions. No grading, commercial viability or legal compliance validation claimed.
+
+## 2.8 Pending
+
 - 2.8 BRD Consolidation & Review
+
 
 No final MVP commitment, database schema or validated financial formulas in this draft.
 
@@ -736,3 +816,4 @@ No final MVP commitment, database schema or validated financial formulas in this
 | 0.4 | Confirm Gate 04; add RWA/credit marketplace research for BD-020 and UC-001–021; draft Gate 05 |
 | 0.5 | Revise BD-020 from pause to allow overdue trading with warnings; update process/use cases and acceptance scenarios; retain BD-019/021/022; Gate 05 pending |
 | 0.6 | Confirm BD-023–027; consolidate BR-001–070; add decision traceability, rule tests and Gate 06 |
+| 0.7 | Confirm BD-028–031 and BR-065–069 policy; retain BD-020 allow; add financial reference research and Phase 3 candidates |
