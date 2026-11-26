@@ -1,9 +1,9 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 0.2 — Gate 02-R1 confirmed; domain model draft  
+**Version:** 0.3 — Gate 03 confirmed; business process model draft  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
-**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling.
+**Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling.
 
 Confirmed = inherited from approved baseline or explicitly approved review gate; Proposed = recommendation awaiting review. This draft does not change the approved baseline.
 
@@ -70,7 +70,7 @@ These are product verification criteria, not validated market KPIs. No commercia
 
 ### 2.1.4 Constraints and assumptions
 
-Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Proposed: one initial issuance per loan, no prior principal repayments at registration, detailed controls for sensitive financial facts. Exact financial conventions, eligibility, payment finality and role assignments remain open. Time, team and grading rubric not confirmed.
+Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Confirmed at Gate 03: one issuance and offering per loan, one collateral per loan, eligibility based on outstanding principal including partially repaid loans, partial listing fill. Proposed: detailed controls for sensitive financial facts. Exact financial conventions, eligibility, payment finality and role assignments remain open. Time, team and grading rubric not confirmed.
 
 ## 2.2 Stakeholder Analysis
 
@@ -161,11 +161,11 @@ Public bank evidence checked 2026-11-27:
 - [Techcombank TOP UP](https://techcombank.com/thong-tin/thong-bao/top-up-da-tien-ich-nay-con-nhieu-uu-dai-hon): historical programme permitted reuse and additional collateral where needed; page marked expired. Not proof of current corporate policy.
 - [Vietcombank loan FAQ](https://www.vietcombank.com.vn/vi-VN/KHCN/Lien-he-va-Ho-tro/Danh-sach-cau-hoi-theo-chu-de-Vay): insufficient public evidence for current corporate collateral reuse policy. Individual bank approval/contract conditions remain unknown.
 
-BD-007-R1 is a CreditForge eligibility restriction, not Vietnamese law: each collateral asset may secure at most one registered loan with an outstanding secured obligation at a time. Sequential reuse after confirmed release is allowed in principle. Multiple assets securing one loan is a separate open decision. The platform must reject overlapping active pledges of the same asset and require issuer evidence of exclusivity; it cannot discover undisclosed external liens. If external shared security becomes known, flag for review and suspend new issuance/trading as appropriate; do not silently assume full recovery.
+BD-007-R1 is a CreditForge eligibility restriction, not Vietnamese law: each collateral asset may secure at most one registered loan with an outstanding secured obligation at a time. Sequential reuse after confirmed release is allowed in principle. Gate 03 additionally limits each registered loan to one collateral asset. The platform must reject overlapping active pledges of the same asset and require issuer evidence of exclusivity; it cannot discover undisclosed external liens. If external shared security becomes known, flag for review and suspend new issuance/trading as appropriate; do not silently assume full recovery.
 
 Example: asset 10bn secures Loan A 4bn and Loan B 2bn. Combined principal-to-value is 60%, but recovery 4bn cannot be counted twice. A cross-loan priority allocation would be needed before each loan's Senior/Junior waterfall. This complexity is excluded; cross-default and shared recovery are not modeled.
 
-## 2.3 Business Domain Modeling — proposed
+## 2.3 Business Domain Modeling — reviewed; detailed model remains proposed
 
 ### 2.3.1 Ubiquitous language
 
@@ -239,12 +239,12 @@ This is a business relationship diagram, not a database schema. Arrows do not re
 | Issuer to Loan | 1:N |
 | Borrower to Loan | 1:N; no borrower user account |
 | Collateral to Security Assignment | 1:N historical; at most one active loan per asset (confirmed) |
-| Loan to Collateral | At least one eligible collateral; exact maximum pending |
+| Loan to Collateral | Exactly one eligible collateral for issuance (confirmed) |
 | Loan to Tranche | Exactly two once issued |
 | Tranche to Token Class | One per tranche proposed for MVP |
 | Token Class to Holding | 1:N; bank retains Junior and initially owns issued Senior |
-| Loan to issuance | One initial issuance proposed; top-ups excluded if accepted |
-| Token Class to Offering | One primary offering proposed; closure/reopening policy pending |
+| Loan to issuance | One issuance; no top-ups (confirmed) |
+| Token Class to Offering | One primary offering for Senior; no reopening after closure (confirmed) |
 | Holding to Listing | 1:N subject to available quantity |
 | Order to source | Exactly one primary Offering OR secondary Listing |
 | Order to Reservation | One logical reservation proposed; never double-count listing locks |
@@ -293,20 +293,157 @@ Exact transitions, permissions, time cutoffs and exception conditions belong in 
 - Final recovery may create losses, but an interim recovery alone is not proof of final loss. Partial recovery/loss recognition policy remains open.
 - Loan maturity is not equivalent to repayment or closure. Token retirement and unresolved payouts require separate rules.
 
-### 2.3.6 Review Gate 03 — proposed decisions
+### 2.3.6 Review Gate 03 — confirmed decisions
 
-| ID | Decision | Recommendation |
+| ID | Decision | Confirmed selection |
 |---|---|---|
 | BD-015 | Initial issuance model | One issuance and one primary offering per loan; no top-up or reopening in MVP |
 | BD-016 | Collateral cardinality per loan | One asset per loan in MVP; retain historical assignment and release records |
-| BD-017 | Eligible loan at registration | Already disbursed, current, no prior principal repayment; capture payment history needed for accrual |
+| BD-017 | Eligible loan at registration | Already disbursed, current, positive outstanding principal; prior principal repayment allowed; remaining repayment schedule must be compatible |
 | BD-018 | Listing fill model | Allow partial purchases by multiple buyers, with order-specific reservations |
 
-All four are proposed, not confirmed. A borrower may still have multiple loans with distinct collateral. Financial rules and exact state machines remain pending.
+Gate 03 confirmed by project owner: BD-015, BD-016 and BD-018 follow the selected screenshot options; BD-017 follows the revised Outstanding Principal option discussed immediately before confirmation. A borrower may still have multiple loans with distinct collateral. Financial rules and exact state machines remain pending.
 
-## 2.4–2.8 Pending
+BD-017 requires an issuer-confirmed opening snapshot at issuance: original principal, outstanding principal, remaining schedule, maturity, effective date, and separation of pre-issuance interest from subsequent token rights. Example: original principal VND 6bn, repaid VND 2bn, outstanding VND 4bn; illustrative 80/20 tranche at VND 100,000 face value gives 32,000 Senior and 8,000 Junior units. Do not tokenize repaid principal or replay historical receipts as distributable cash. Refresh and revalidate snapshot before issuance if principal or material terms change; prior approvals must not silently authorize a changed issuance amount. This does not decide whether future amortizing schedules are supported: repayment structure and treatment of post-issuance principal payments remain Phase 3 decisions.
 
-- 2.4 Business Process Modeling
+## 2.4 Business Process Modeling — draft for review
+
+### 2.4.1 Process inventory
+
+| ID | Process | Trigger | Business outcome |
+|---|---|---|---|
+| BP-001 | Asset registration and dual approval | Issuer proposes existing loan | Approved offering proposal or returned/rejected case |
+| BP-002 | Issuance and primary publication | Valid final approval and opening snapshot | One token issuance and one Senior offering |
+| BP-003 | Primary purchase | Investor selects quantity | Direct payment to Bank and settled ownership |
+| BP-004 | Secondary listing and purchase | Holder lists or Buyer selects quantity | Partial/full fill, direct payment to Seller, transfer |
+| BP-005 | Payment exception and reconciliation | Timeout, mismatch, duplicate or settlement failure | Resolved or traceable outstanding obligation |
+| BP-006 | Repayment and distribution | Bank records confirmed receipt | Allocated rights and automatic payout instructions |
+| BP-007 | Payout execution | Posted external payable | Confirmed bank payout or outstanding payable |
+| BP-008 | Default and recovery | Verified credit event / recovery receipt | Loss allocation and recovery payout under rules |
+| BP-009 | Closure and collateral release | Contractual obligations resolved | Closed rights, resolved obligations, evidence of release separately recorded |
+
+These processes describe business responsibilities, not endpoints, database schema or service deployment. Financial calculations and exact timing remain pending.
+
+### 2.4.2 BP-001–002 — Registration, approval and issuance
+
+```mermaid
+flowchart TD
+ A[Issuer Officer registers existing loan and collateral] --> B[Check eligibility and outstanding principal]
+ B --> C{Valid data?}
+ C -->|No| D[Return for correction]
+ D --> A
+ C -->|Yes| E[Propose terms and submit version]
+ E --> F{Issuer Approver accepts?}
+ F -->|Return| D
+ F -->|Reject| Z[Rejected]
+ F -->|Yes| G{Marketplace Operator approves publication?}
+ G -->|Return| D
+ G -->|Reject| Z
+ G -->|Yes| H[Revalidate opening snapshot and approved version]
+ H --> I{Material change?}
+ I -->|Yes| D
+ I -->|No| J[Issue Senior and Junior to Bank once]
+ J --> K[Publish single Senior offering]
+```
+
+Preconditions: existing disbursed current loan, positive eligible outstanding principal, one collateral, no overlapping active registered pledge, compatible remaining repayment schedule, unique reference. Prior principal repayments allowed. Issuer Officer submits; distinct Issuer Approver approves; Marketplace Operator checks eligibility/disclosure, not underwriting. Rejection records reason. Material changes require new approval (proposed control). Issuance is idempotent; Bank initially owns all issued units, retains Junior. No second issuance or reopening closed offering. Publication and issuance failures must not generate duplicate units; retry the same approved issuance. Opening snapshot distinguishes historical receipts from post-issuance entitlement.
+
+### 2.4.3 BP-003 — Primary purchase
+
+```mermaid
+sequenceDiagram
+ participant U as Investor
+ participant C as CreditForge
+ participant P as Payment System
+ participant B as Issuer Bank
+ U->>C: Select offering and quantity
+ C->>C: Validate and reserve units
+ C->>P: Create payment request to issuer
+ U->>P: Authorize simulated payment
+ P->>B: Transfer funds
+ P-->>C: Payment confirmation
+ C->>C: Verify and settle ownership once
+ C-->>U: Completed order and holdings
+```
+
+Price and quantity fixed in order; total verified against payment evidence. Payment bank can differ from issuer. Reservation reduces available offering quantity, not ownership. Only successful settlement moves units and begins Investor accrual. Unsold Senior stays with Bank. Offering closure prevents new orders; treatment of in-flight orders is proposed in Gate 04.
+
+### 2.4.4 BP-004 — Secondary listing and partial fill
+
+Seller selects available Senior units, sets price and quantity, confirms listing. System locks listed units. Buyer selects integer quantity up to available listing quantity; system reserves units for that order. Buyer authorizes payment directly to verified Seller receiving account. Verified confirmation permits settlement; ownership moves once and listing remaining quantity reduces. Other buyers may purchase remaining units.
+
+Example: list 1,000 units; order A reserves 300, order B reserves 200. Before settlement: 500 available, 500 reserved, Seller still owns all 1,000. After A settles: 300 sold, 200 reserved, 500 available; after B settles: 500 sold, 0 reserved, 500 available. Reservation is a subset of listing lock, not a second deduction. Cancelling a listing must not release units backing unresolved paid/pending orders. Price amendments and cancellation policy remain pending; order price/payee snapshot must not silently change.
+
+### 2.4.5 BP-005 — Payment exception and reconciliation
+
+```mermaid
+flowchart TD
+ A[Order reserved and payment requested] --> B{Verified external payment status}
+ B -->|Confirmed and matches| C[Attempt settlement]
+ C -->|Success| D[Completed]
+ C -->|Failure| E[Keep reservation and reconcile]
+ B -->|Definitively unpaid or failed| F[Expire or cancel and release as applicable]
+ B -->|Unknown or mismatch| G[Reconciliation required]
+ B -->|Late after release| G
+ E --> H{Can safely settle?}
+ H -->|Yes| C
+ H -->|No| I[Authorized refund request or unresolved case]
+ G --> H
+ I --> J{Refund confirmed?}
+ J -->|Yes| K[Close refunded order and resolve reservation]
+ J -->|No| L[Keep traceable exception]
+```
+
+Duplicate callback must not trigger another transfer. Timeout alone is not proof of nonpayment; verify finality before release. A late payment after release cannot displace other completed purchases. Refund is a separate banking operation and not guaranteed if Seller already received money. Marketplace Operator may reconcile and initiate permitted retry/refund; cannot fabricate confirmations, debit accounts or override ownership manually. Ambiguous external status is an exception, not a successful payment. Exact deadlines, retry counts and refund authorization remain open.
+
+### 2.4.6 BP-006–007 — Manual repayment recording and automatic payout
+
+```mermaid
+sequenceDiagram
+ participant B as Issuer Officer
+ participant A as Issuer Approver
+ participant C as CreditForge
+ participant P as Payment System
+ participant U as Investor Bank Account
+ B->>C: Record confirmed external receipt and reference
+ C->>C: Validate amount, components and uniqueness
+ opt Proposed maker-checker for financial facts
+ A->>C: Confirm receipt
+ end
+ C->>C: Calculate and post waterfall allocation once
+ C->>P: Authorized payout instruction
+ P->>U: Simulated bank transfer
+ P-->>C: Payout confirmation or failure
+ C->>C: Reconcile entitlement and actual payout
+```
+
+Bank manually records actual receipts, not expected amounts. Record loan, external reference, effective date, principal/interest breakdown, evidence. Validation rejects duplicate receipts and pre-issuance receipts as new distributable funds. Once accepted, engine calculates allocation using approved terms and ownership history. Bank retained entitlement need not generate a transfer. Automatic payout uses verified receiving account and authorized issuer instruction; no claim or withdraw. A failed or unknown payout stays outstanding; retry only after status verification and without creating another distribution. No manual editing of calculated entitlements.
+
+Proposed: Issuer Approver confirms each receipt before posting. This is separate from confirmed dual offering approval, and requires Gate 04 decision. Exact principal/lãi priority, day count, accrued interest, rounding and partial receipts remain Phase 3.
+
+### 2.4.7 BP-008 — Default and recovery
+
+Detect missing expected receipt → issuer verifies actual overdue status → grace if applicable → authorized issuer confirms default → stop new trading under proposed policy → issuer performs recovery outside platform → records confirmed net recovery and references → Financial Engine distributes available funds → recognize losses only when appropriate under final loss policy → payout → closure review.
+
+A missed schedule or missing manual record is not by itself proof of default. Interim recovery is not necessarily final loss. No physical liquidation in CreditForge. Existing pending or paid orders must be resolved without silently dropping obligations. No new interest/principal guarantees; Junior first-loss and Senior pari passu under approved financial rules. Default trading policy remains Gate 04 proposal; grace, impairment, recovery finality and exact waterfall remain Phase 3.
+
+### 2.4.8 BP-009 — Closure and release
+
+Maturity is a date, not proof of payment. Verify outstanding principal and interest rights, final distributions, recognized losses, ownership retirement, unpaid payouts and unresolved settlement/refund cases. Loan servicing closure, token trading closure and payment reconciliation may occur at different times; do not discard open obligations. Collateral release requires evidence of release and no outstanding secured obligation before subsequent reuse. Exact closure criteria and retirement states are pending.
+
+### 2.4.9 Review Gate 04 — process decisions (proposed)
+
+| ID | Decision | Recommendation and rationale |
+|---|---|---|
+| BD-019 | Repayment/recovery fact approval | Issuer Officer records, distinct Issuer Approver verifies before distribution; financial facts directly trigger payouts, so maker-checker is valuable |
+| BD-020 | Trading during overdue/default/maturity | Pause new primary and secondary orders on confirmed overdue; resume only after verified cure and eligibility; default/maturity stop new trades; existing orders resolved separately |
+| BD-021 | Offering closure with pending orders | Stop new orders immediately; honor pre-existing valid reservations through original payment deadline if loan remains eligible; otherwise reconcile and refund as required; never reopen closed offering |
+| BD-022 | Listing cancellation with pending orders | Allow cancellation of unreserved remainder; existing reservations remain until definitively unpaid, settled or otherwise resolved; no cancellation that strands paid Buyer |
+
+These are recommendations, not confirmed decisions. Reservation duration, payment finality, late confirmations, dispute resolution, price amendment, default grace and exact payout/settlement retry rules remain open. No new technical architecture commitment.
+
+## 2.5–2.8 Pending
+
 - 2.5 Business Use Cases
 - 2.6 Business Rules Analysis
 - 2.7 Financial Model Research (primary-source verification required)
@@ -320,3 +457,4 @@ No final MVP commitment, database schema or validated financial formulas in this
 |---|---|
 | 0.1 | Re-baseline Business Context and Stakeholder Analysis against Idea Specification v2.1; Review Gate 02-R1 pending |
 | 0.2 | Confirm Gate 02-R1; document collateral reuse research; add proposed Business Domain Model and Gate 03 |
+| 0.3 | Confirm Gate 03 with Outstanding Principal eligibility; draft BP-001–009 and Gate 04 |
