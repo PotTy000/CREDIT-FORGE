@@ -28,13 +28,15 @@ Date: 2026-11-27. Baseline: [BRD v1.0](./BRD.md), commit 0f7dd05dd65e21e53407ee6
 | 010 | Adapt | R1 loan originator external to investment marketplace; no borrower portal deliberate. Keep. |
 | 011 | Custom | R8 connected-account charge differs from direct bank transfer; no proven equivalent for investor-to-investor sale. Keep with reconciliation risk. |
 | 012 | Adapt | R6 payout mechanics; automatic issuer bank payout is project adaptation. Keep. |
-| 013 | Custom | Manual external receipt entry due to no bank integration. Keep. |
+| 013 | Superseded | Historical manual external receipt entry; replaced by 013-R1. |
+| 013-R1 | Adapt | Mambu posted loan repayment notification and loan transaction retrieval; simulated source only. Confirmed. |
 | 014 | Adapt | R2 role separation; combined marketplace role limits scope. Keep. |
 | 015 | Custom | One issuance/offering avoids top-ups and overlapping vintage rights. Keep. |
 | 016 | Custom | One collateral per loan simplifies recovery. Keep. |
 | 017 | Adopt principle | R1 final terms use transferred outstanding principal; exact eligible balance and full-basis issuance remain FD-005. Keep. |
 | 018 | Adapt | R7 partial order filling; fixed-price listing and external payment reservations require adaptation. Keep. |
-| 019 | Adapt | R6 approval principle, not exact loan receipt maker-checker. Keep. |
+| 019 | Superseded | Historical approval for every receipt; replaced by 019-R1. |
+| 019-R1 | Adapt | Mambu event-driven servicing plus verified routine receipt acceptance; R6 maker-checker for exceptions/corrections/recovery, not a claim of Mambu's exact approval model. Confirmed. |
 | 020 | Reconsider | R4 sale eligibility excludes late/overdue positions in indexed current guidance; lender remittance delay policy differs. Existing ALLOW remains confirmed; propose explicit owner review only if aligning more closely with Mintos. |
 | 021 | Custom | R8 checkout/fulfillment analogue; no exact offering-close policy verified. Keep. |
 | 022 | Adapt | R7 cancel open remainder analogy; protected external payment reservation is custom. Keep. |
@@ -53,3 +55,7 @@ Superseded BD-006, BD-007, BD-008 remain superseded. No new approved decision.
 ## Handoff
 
 Retain current business baseline unless owner explicitly revises BD-020. BD-003 is supported by Mintos loan/Notes interest allocation; distinguish its bond clean/dirty pricing model and resolve pre-listing/overdue unpaid interest, cutoffs, partial cash and payout rights in 3.4. Do not conflate different products. FD-001–005 remain pending, with Goldfinch Senior-first candidate subject to full waterfall consistency. Research does not validate exact formulas or legal compliance. Prioritize reference mechanisms first and only request decisions on material divergences. No contract audit; source extracts insufficient to prove exact operational rules, and no new real bank integration assumed.
+
+## Subsequent approved revision (BRD v1.1)
+
+[Mambu Loan Repayment event](https://docs.mambu.com/docs/event-triggers/), [Webhook notifications](https://docs.mambu.com/docs/webhook-notifications/), [Loan Transactions API](https://docs.mambu.com/api/api-v1/loantransactions/loan-transactions/) provide reference for automatic synchronization. [OWASP webhook security](https://cheatsheetseries.owasp.org/cheatsheets/Webhook_Security_Cheat_Sheet.html) supports verification and deduplication. Owner confirmed replacement of manual routine entry/approval; recovery/corrections and credit status remain controlled. No change to underlying pass-through economics. Original audit refers to BRD v1.0 history; read v1.1 for current decisions.
