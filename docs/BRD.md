@@ -1,6 +1,6 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 1.1 — approved baseline; revised repayment integration  
+**Version:** 1.2 — approved baseline; Quote-first checkout revision  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
 **Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases; 2.6 Business Rules Analysis; 2.7 Financial Model Research; 2.8 BRD Consolidation & Review.
@@ -113,7 +113,7 @@ Confirmed at Gate 02-R1: ACT-004 and ACT-005 are capability groups assigned to o
 | Confirm overdue/cure/default | Issuer Officer submits; distinct Issuer Approver confirms | Evidence and policy; no automatic default or arbitrary Marketplace decision (BD-026) |
 | Create listing/order | Investor (issuer for primary offering) | Ownership, quantity and trading eligibility |
 | Confirm external payment | Payment System | CreditForge verification; no manual paid-status override |
-| Transfer ownership | Automated CreditForge settlement | Valid payment, reservation, eligibility and idempotency |
+| Transfer ownership | Automated CreditForge settlement | Valid payment, Quote Lock, eligibility and idempotency |
 | Calculate distribution/loss | Financial Engine | Approved rules and confirmed inputs; no manual output override |
 | Execute bank payout | Simulated Payment System on issuer instruction | Authorized instruction, confirmation, reconciliation |
 | Resolve exceptions | Settlement Operator | Scoped authority, audit, no unilateral bank debit |
@@ -129,7 +129,7 @@ Approval of an offering is not approval of a loan. Marketplace checks consistenc
 | Issuer vs Investor | Adverse selection; lower-quality assets distributed | Junior retention, verified input references, disclosure, eligibility review |
 | Issuer vs Marketplace | Issuer seeks rapid publication; operator needs integrity | Separate submit/review permissions; record reasons and approved version |
 | Seller vs Buyer | Seller may conceal worsening credit; liquidity asymmetry | Canonical loan data, no seller editing, trading suspension policy |
-| Buyer vs Seller | Money transferred but ownership not transferred, or refund unavailable | Reservation, external confirmation, exception workflow and reconciliation |
+| Buyer vs Seller | Money transferred but ownership not transferred, or refund unavailable | Quote Lock, external confirmation, exception workflow and reconciliation |
 | Operator vs Investor | Unilateral override or hidden correction | Automated rules, least privilege, audit, append-only corrections |
 | Payout recipient vs operator | Wrong account or duplicate payout | Verified account, authorized instruction, confirmation and idempotency |
 
@@ -183,8 +183,10 @@ Example: asset 10bn secures Loan A 4bn and Loan B 2bn. Combined principal-to-val
 | Holding | Owner's quantity and remaining principal rights in a token class |
 | Ownership Event | Issuance, transfer or retirement with effective time; supports historical accrual |
 | Listing | Seller's fixed-price offer backed by locked holdings |
-| Purchase Order | Buyer commitment to quantity and price; primary or secondary source |
-| Reservation | Temporary allocation of units to one order; distinct from listing lock |
+| Listing Lock | Seller holdings locked for one listing; includes its Quote Locks |
+| Quote | Immutable server-generated transaction terms, Buyer, source and deadline; single-use |
+| Quote Lock | Temporary quantity held for one Quote, continues through accepted Order and payment reconciliation; subset of Listing Lock on Secondary |
+| Purchase Order | Buyer acceptance of one Quote; tracks transaction through payment and settlement |
 | Payment Request | Authorized external money movement instruction/reference |
 | Payment Confirmation | Evidence of external payment, not ownership transfer |
 | Settlement | Completion of verified purchase and ownership transfer exactly once |
@@ -213,10 +215,14 @@ flowchart TD
  K --> O[Primary Offering]
  K --> H[Holdings and Ownership Events]
  H --> S[Secondary Listing]
- O --> Q[Purchase Order]
+ S --> LL[Listing Lock]
+ O --> Q[Quote]
  S --> Q
- Q --> R[Reservation]
- Q --> P[Payment Request and Confirmation]
+ Q --> R[Quote Lock]
+ LL --> R
+ Q --> ORD[Purchase Order]
+ ORD --> R
+ ORD --> P[Payment Request and Confirmation]
  P --> X[Settlement]
  X --> H
  P --> F[Refund if required]
@@ -246,8 +252,9 @@ This is a business relationship diagram, not a database schema. Arrows do not re
 | Loan to issuance | One issuance; no top-ups (confirmed) |
 | Token Class to Offering | One primary offering for Senior; no reopening after closure (confirmed) |
 | Holding to Listing | 1:N subject to available quantity |
-| Order to source | Exactly one primary Offering OR secondary Listing |
-| Order to Reservation | One logical reservation proposed; never double-count listing locks |
+| Quote to source | Exactly one primary Offering OR secondary Listing |
+| Quote to Quote Lock | Exactly one logical lock created atomically with Quote; no double-counting |
+| Quote to Order | Zero or one Order; created on valid acceptance; inherits original deadline and lock |
 | Order to payment attempts | 1:N possible attempts, at most one accepted settlement; policy pending |
 | Receipt to Distribution | One logical allocation run per receipt/version; multiple entitlement lines |
 | Entitlement to Payout | One logical payable, potentially multiple attempts; retry never creates new entitlement |
@@ -258,7 +265,7 @@ This is a business relationship diagram, not a database schema. Arrows do not re
 | Business domain | Owns | Does not own |
 |---|---|---|
 | Credit Asset & Issuance | Loan reference, collateral assignments, approved terms, tranche and issuance | Actual credit approval/disbursement |
-| Marketplace | Offering, Listing, Order, Reservation | Bank money or financial allocation formulas |
+| Marketplace | Offering, Listing, Listing Lock, Quote, Quote Lock, Order | Bank money or financial allocation formulas |
 | Ownership Registry | Holdings and historical ownership changes | Payment authorization |
 | Payment & Settlement | Payment evidence, coordination, exception/refund and reconciliation | Bank account balances; unilateral debit |
 | Loan Servicing & Finance | Receipts, accrual, distribution, default/recovery/loss | Physical recovery, external transfers |
@@ -272,7 +279,8 @@ Boundaries are logical; not a mandate for microservices.
 - Credit Asset registration: Draft → Submitted → Reviewed/Rejected → Eligible. Loan servicing status is separate: Active, Overdue, Defaulted, Recovery, Closed.
 - Offering proposal: Draft → Issuer Approved → Marketplace Approved → Published; return/reject and version changes handled separately.
 - Offering: Scheduled/Open → Closed or Suspended. Closure does not cancel loan.
-- Listing: Active → Filled/Cancelled/Expired/Suspended. Pending orders resolved before releasing their reservations.
+- Listing: Active → Filled/Cancelled/Expired/Suspended. Outstanding Quote Locks resolved before release, including accepted orders.
+- Quote: Generated → Accepted/Expired/Cancelled/Invalidated; accepted once. Quote Lock: Active → Consumed/Released, remains protected during unresolved payment.
 - Order: Pending → Completed/Cancelled/Expired or exception; Payment and Settlement have independent states.
 - Payment: Requested → Pending → Confirmed/Failed; late/ambiguous confirmation enters reconciliation. Refund is separate.
 - Settlement: Pending → Completed or Exception; confirmed payment cannot be treated as unpaid.
@@ -300,7 +308,7 @@ Exact transitions, permissions, time cutoffs and exception conditions belong in 
 | BD-015 | Initial issuance model | One issuance and one primary offering per loan; no top-up or reopening in MVP |
 | BD-016 | Collateral cardinality per loan | One asset per loan in MVP; retain historical assignment and release records |
 | BD-017 | Eligible loan at registration | Already disbursed, current, positive outstanding principal; prior principal repayment allowed; remaining repayment schedule must be compatible |
-| BD-018 | Listing fill model | Allow partial purchases by multiple buyers, with order-specific reservations |
+| BD-018 | Listing fill model | Allow partial purchases by multiple buyers, with Quote-specific locks |
 
 Gate 03 confirmed by project owner: BD-015, BD-016 and BD-018 follow the selected screenshot options; BD-017 follows the revised Outstanding Principal option discussed immediately before confirmation. A borrower may still have multiple loans with distinct collateral. Financial rules and exact state machines remain pending.
 
@@ -357,7 +365,10 @@ sequenceDiagram
  participant P as Payment System
  participant B as Issuer Bank
  U->>C: Select offering and quantity
- C->>C: Validate and reserve units
+ C->>C: Validate and atomically create Quote and Quote Lock
+ C-->>U: Show terms and original deadline
+ U->>C: Accept Quote
+ C->>C: Revalidate and create one Order
  C->>P: Create payment request to issuer
  U->>P: Authorize simulated payment
  P->>B: Transfer funds
@@ -366,13 +377,13 @@ sequenceDiagram
  C-->>U: Completed order and holdings
 ```
 
-Price and quantity fixed in order; total verified against payment evidence. Payment bank can differ from issuer. Reservation reduces available offering quantity, not ownership. Only successful settlement moves units and begins Investor accrual. Unsold Senior stays with Bank. Offering closure prevents new orders; existing eligible orders retain their original payment deadline under BD-021.
+Price and quantity fixed in Quote; accepted Order references immutable terms; total verified against payment evidence. Payment bank can differ from issuer. Quote Lock reduces available offering quantity, not ownership. Only successful settlement moves units and begins Investor accrual. Unsold Senior stays with Bank. Offering closure prevents new orders; existing eligible orders retain their original payment deadline under BD-021.
 
 ### 2.4.4 BP-004 — Secondary listing and partial fill
 
-Seller selects available Senior units, sets price and quantity, confirms listing. System locks listed units. Buyer selects integer quantity up to available listing quantity; system reserves units for that order. Buyer authorizes payment directly to verified Seller receiving account. Verified confirmation permits settlement; ownership moves once and listing remaining quantity reduces. Other buyers may purchase remaining units.
+Seller selects available Senior units, sets price and quantity, confirms listing. System locks listed units. Buyer selects integer quantity up to available listing quantity; system atomically creates Quote and Quote Lock within Listing Lock. Buyer reviews and accepts valid Quote to create one Order. Buyer authorizes payment directly to verified Seller receiving account. Verified confirmation permits settlement; ownership moves once and listing remaining quantity reduces. Other buyers may purchase remaining units.
 
-Example: list 1,000 units; order A reserves 300, order B reserves 200. Before settlement: 500 available, 500 reserved, Seller still owns all 1,000. After A settles: 300 sold, 200 reserved, 500 available; after B settles: 500 sold, 0 reserved, 500 available. Reservation is a subset of listing lock, not a second deduction. Cancelling a listing must not release units backing unresolved paid/pending orders. Cancellation of unreserved remainder is confirmed under BD-022; BD-024 requires cancellation of unreserved remainder and a new listing to change price; existing order price/payee snapshot must not silently change.
+Example: list 1,000 units; order A reserves 300, order B reserves 200. Before settlement: 500 available, 500 reserved, Seller still owns all 1,000. After A settles: 300 sold, 200 reserved, 500 available; after B settles: 500 sold, 0 reserved, 500 available. Quote Lock is a subset of listing lock, not a second deduction. Cancelling a listing must not release units backing unresolved paid/pending orders. Cancellation of unreserved remainder is confirmed under BD-022; BD-024 requires cancellation of unreserved remainder and a new listing to change price; existing order price/payee snapshot must not silently change.
 
 ### 2.4.5 BP-005 — Payment exception and reconciliation
 
@@ -381,7 +392,7 @@ flowchart TD
  A[Order reserved and payment requested] --> B{Verified external payment status}
  B -->|Confirmed and matches| C[Attempt settlement]
  C -->|Success| D[Completed]
- C -->|Failure| E[Keep reservation and reconcile]
+ C -->|Failure| E[Keep Quote Lock and reconcile]
  B -->|Definitively unpaid or failed| F[Expire or cancel and release as applicable]
  B -->|Unknown or mismatch| G[Reconciliation required]
  B -->|Late after release| G
@@ -390,7 +401,7 @@ flowchart TD
  H -->|No| I[Authorized refund request or unresolved case]
  G --> H
  I --> J{Refund confirmed?}
- J -->|Yes| K[Close refunded order and resolve reservation]
+ J -->|Yes| K[Close refunded order and resolve Quote Lock]
  J -->|No| L[Keep traceable exception]
 ```
 
@@ -443,10 +454,10 @@ Maturity is a date, not proof of payment. Verify outstanding principal and inter
 |---|---|---|
 | BD-019 | Historical decision (superseded by BD-019-R1) | Manual approval for every repayment/recovery receipt; now limited to exceptions, corrections and recovery |
 | BD-020 | Trading during overdue/default/maturity | Allow primary and secondary trading during confirmed overdue with explicit risk warnings, subject to other eligibility rules; default/maturity stop new trades; existing orders resolved separately |
-| BD-021 | Offering closure with pending orders | Stop new orders immediately; honor pre-existing valid reservations through original payment deadline if loan remains eligible; otherwise reconcile and refund as required; never reopen closed offering |
-| BD-022 | Listing cancellation with pending orders | Allow cancellation of unreserved remainder; existing reservations remain until definitively unpaid, settled or otherwise resolved; no cancellation that strands paid Buyer |
+| BD-021 | Offering closure with pending orders | Stop new Quotes immediately; honor pre-existing valid Quote Locks through original payment deadline if loan remains eligible; otherwise reconcile and refund as required; never reopen closed offering |
+| BD-022 | Listing cancellation with pending orders | Allow cancellation of unreserved remainder; existing Quote Locks remain until definitively unpaid, settled or otherwise resolved; no cancellation that strands paid Buyer |
 
-All four decisions confirmed by project owner; BD-020 revised from pause to allow in Gate 04-R1. BD-021 and BD-022 unchanged; BD-019 subsequently revised by BD-019-R1 during Phase 3. BD-020 is a project-specific risk and scope policy, not a universal RWA industry standard. Reservation duration is 10 minutes per BD-030; payment finality, late confirmations, dispute resolution, default grace and exact payout/settlement retry rules remain open. No new technical architecture commitment.
+All four decisions confirmed by project owner; BD-020 revised from pause to allow in Gate 04-R1. BD-021 and BD-022 unchanged; BD-019 subsequently revised by BD-019-R1 during Phase 3. BD-020 is a project-specific risk and scope policy, not a universal RWA industry standard. Quote Lock duration is 10 minutes per BD-030; payment finality, late confirmations, dispute resolution, default grace and exact payout/settlement retry rules remain open. No new technical architecture commitment.
 
 ### 2.4.10 BD-020 reference research
 
@@ -463,7 +474,7 @@ Evidence limitation: Mintos overdue-funds article was read in full; some other o
 
 **Revised decision (Gate 04-R1):** supersede the previous pause-on-overdue choice. Allow new primary and secondary orders during issuer-confirmed overdue, with explicit risk warnings and all other eligibility checks. Stop new trades on default, recovery, maturity or closure. An already closed primary offering never reopens; an independent suspension for another valid reason is not overridden. Continue servicing, distributions, payout and reconciliation. A missing synchronized repayment record alone is not proof of delinquency. This policy preserves a possible exit route, but does not guarantee liquidity and increases adverse-selection and unpaid-interest allocation risks. The reference research above is retained as historical context; it does not establish that this policy is an industry standard.
 
-Confirmed BD-027: require explicit buyer acknowledgement of overdue risk before payment authorization in either market. Confirmed BD-029 requires revalidation and renewed consent before authorization for material risk changes, and reconciliation after authorization. Proposed presentation details: disclose verified overdue obligations, days overdue and last status update on asset, listing and checkout; bind acknowledgement to the disclosed status version; if material risk changes before settlement, revalidate and route unresolved orders to reconciliation, without automatic transfer or release of paid reservations. Do not assume consent to a changed risk profile. Exact treatment of already authorized/paid orders, information cutoffs and unpaid pre-transfer interest remains open. Distinguish delinquency from default and impairment; no new valuation model or guaranteed recovery is implied.
+Confirmed BD-027: require explicit buyer acknowledgement of overdue risk before payment authorization in either market. Confirmed BD-029 requires revalidation and renewed consent before authorization for material risk changes, and reconciliation after authorization. Proposed presentation details: disclose verified overdue obligations, days overdue and last status update on asset, listing and checkout; bind acknowledgement to the disclosed status version; if material risk changes before settlement, revalidate and route unresolved orders to reconciliation, without automatic transfer or release of paid Quote Locks. Do not assume consent to a changed risk profile. Exact treatment of already authorized/paid orders, information cutoffs and unpaid pre-transfer interest remains open. Distinguish delinquency from default and impairment; no new valuation model or guaranteed recovery is implied.
 
 ## 2.5 Business Use Cases — Gate 05 reviewed; detailed specifications pending
 
@@ -505,11 +516,11 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | UC-004 | Both approvals for same version, valid opening snapshot | Revalidate, issue Senior/Junior once to Bank, publish one Senior offering | Bank owns initial rights; failure retry does not mint twice; no second issuance/reopening |
 | UC-005 | Published product visible to eligible viewer | View loan, terms, collateral summary, verified overdue status and risk warning, available units/listings | Informed decision; overdue does not itself prevent an order; suspended/defaulted/matured items clearly marked and ineligible for new orders |
 | UC-006 | Authenticated Investor | Submit simulated bank destination; verify identity/account under chosen policy | Verified receiving account; new destination applies only to new instructions, existing instructions retain snapshot; failed verification prevents dependent transaction; no credentials/PIN/OTP stored |
-| UC-007 | Eligible Investor, open eligible offering, available units | Choose quantity, disclose overdue risk and require acknowledgement where applicable, reserve, authorize bank payment to Issuer, verify confirmation, settle | Ownership and accrual begin on completion; handle duplicate, mismatch, timeout and settlement failure via UC-012 |
+| UC-007 | Eligible Investor, open eligible offering, available units | Choose quantity, create Quote and Quote Lock atomically, review and accept Quote with overdue acknowledgement where applicable, create Order, authorize bank payment to Issuer, verify confirmation, settle | Ownership and accrual begin on completion; handle duplicate, mismatch, timeout and settlement failure via UC-012 |
 | UC-008 | Seller owns available transferable Senior units; verified receiving account | Set integer quantity and fixed price; validate and lock units; show canonical overdue warning if applicable | Active listing; overdue alone is not a rejection reason; reject oversell, otherwise ineligible loan or invalid price |
-| UC-009 | Eligible Buyer, active eligible listing and available quantity | Reject self-purchase; select partial/full quantity; disclose overdue risk and require acknowledgement where applicable; reserve; authorize direct transfer to Seller; verify and settle | Buyer owns purchased units, remaining listing stays available; price/coupon distinction preserved; exceptions UC-012 |
-| UC-010 | Seller owns listing | Cancel unreserved remainder; preserve order-specific reservations; create new listing if changing price | No new orders for cancelled remainder; reserved units resolved independently |
-| UC-011 | Authorized issuer or scheduled closure condition | Close offering to new orders; honor existing valid reservations within original deadline if still eligible | Unsold Senior remains Bank; no reopening; unsafe pending cases UC-012 |
+| UC-009 | Eligible Buyer, active eligible listing and available quantity | Reject self-purchase; select partial/full quantity; create Quote and Quote Lock atomically; review and accept Quote with overdue acknowledgement where applicable; create Order; authorize direct transfer to Seller; verify and settle | Buyer owns purchased units, remaining listing stays available; price/coupon distinction preserved; exceptions UC-012 |
+| UC-010 | Seller owns listing | Cancel unreserved remainder; preserve Quote-specific locks; create new listing if changing price | No new orders for cancelled remainder; reserved units resolved independently |
+| UC-011 | Authorized issuer or scheduled closure condition | Close offering to new orders; honor existing valid Quote Locks within original deadline if still eligible | Unsold Senior remains Bank; no reopening; unsafe pending cases UC-012 |
 | UC-012 | Payment mismatch, unknown, late, duplicate or settlement failure | Query trusted evidence; reconcile; retry safe settlement or request authorized refund | Completed, refunded or unresolved case; no manual paid override or unauthorized debit; no double-sale |
 | UC-013 | Posted repayment at trusted Mock Core Banking | Receive event; verify source transaction, loan, reference, effective date, amount and components; deduplicate | Valid receipt automatically accepted and allocated once; mismatch or ambiguous facts enter UC-014 |
 | UC-014 | Exception, correction or recovery evidence; distinct Approver | Officer reconciles with authoritative source and submits resolution; Approver accepts or rejects | Valid resolution triggers allocation once if applicable; preserve earlier postings and no fabricated receipt |
@@ -523,7 +534,7 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 
 ### 2.5.3 Cross-cutting automated subflows
 
-- Reservation and ownership settlement (UC-007/009): validate availability and eligibility; reserve once; verify external payment; transfer once; record event and update source. External bank transfer cannot be rolled back by DB.
+- Quote Lock and ownership settlement (UC-007/009): validate availability and eligibility; reserve once; verify external payment; transfer once; record event and update source. External bank transfer cannot be rolled back by DB.
 - Distribution and loss allocation (UC-013/014/017): use approved receipts, ownership intervals and financial rules; validate available cash and loss conservation; persist allocation once. Exact calculations Phase 3.
 - Automatic payout (UC-013/014/015): issuer-authorized instruction to external simulator, verified destination, confirm/reconcile. No manual investor claim.
 - Trading eligibility (UC-005/007/008/009/011/016): check loan state and source status independently; enforce BD-020/021/022; preserve in-flight obligations.
@@ -536,16 +547,16 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | Existing loan 6bn, repaid 2bn before issuance | Issue no more than eligible 4bn; historical repayment not distributed |
 | Officer tries to approve own proposal or receipt | Denied |
 | Marketplace review of modified approved proposal | Prior approvals invalidated under BD-028 |
-| Two buyers request more than remaining listed units | Only valid reservations accepted; no oversell |
+| Two buyers request more than remaining listed units | Only valid Quote Locks accepted; no oversell |
 | Listing 1,000, order reserves 300, seller cancels | 700 unlocked; 300 preserved until resolved |
 | Offering closes while eligible order still valid | No new orders; existing valid order may settle before its deadline |
-| Verified overdue while order pending | New orders remain allowed with warnings if otherwise eligible; pending order risk changes reviewed under BD-029; no automatic release of paid reservation |
+| Verified overdue while order pending | New orders remain allowed with warnings if otherwise eligible; pending order risk changes reviewed under BD-029; no automatic release of paid Quote Lock |
 | Verified overdue before new purchase | Primary/secondary orders allowed if otherwise eligible; explicit risk warning and required acknowledgement before payment |
 | Buyer attempts own listing | Denied before payment |
 | Seller reprices listing with pending order | Cancel unreserved remainder; create new listing; reserved price unchanged |
 | Receiving account changes during payout | Existing instruction destination unchanged |
 | Missing repayment record | Flag for dual status review; no automatic overdue |
-| Default or maturity while order pending | Stop new orders; reconcile existing obligations; no automatic release of paid reservation |
+| Default or maturity while order pending | Stop new orders; reconcile existing obligations; no automatic release of paid Quote Lock |
 | Same payment confirmation received twice | One ownership transfer |
 | Payment confirmed but settlement fails | Traceable exception; preserve obligation, no duplicate transfer |
 | Receipt approved twice or duplicate external reference | One accepted receipt/distribution |
@@ -637,8 +648,8 @@ A Business Decision (BD) records an agreed policy; a Business Rule (BR) constrai
 | BR-055 | Valid routine repayment is automatically accepted after authoritative verification; exceptions, corrections and recovery require distinct Issuer Approver review before new allocation or adjustment. | BD-019-R1 | UC-013,014,017 |
 | BR-056 | Confirmed overdue alone does not prevent primary/secondary trades; disclose risk and enforce other eligibility. | BD-020 revised | UC-005,007–009,016 |
 | BR-057 | Stop new trades on default, recovery, maturity or closure; resolve existing orders separately. | BD-020 revised | UC-011,012,016,018 |
-| BR-058 | Closing Offering prevents new orders; valid existing reservations may complete through original deadline if otherwise eligible. | BD-021 | UC-007,011 |
-| BR-059 | Seller can cancel only unreserved remainder; outstanding reservations survive cancellation until resolved. | BD-022 | UC-010 |
+| BR-058 | Closing Offering prevents new orders; valid existing Quote Locks may complete through original deadline if otherwise eligible. | BD-021 | UC-007,011 |
+| BR-059 | Seller can cancel only unreserved remainder; outstanding Quote Locks survive cancellation until resolved. | BD-022 | UC-010 |
 | BR-060 | Investor cannot purchase own listing; check buyer and seller owner identity, not merely display name. | BD-023 | UC-009 |
 | BR-061 | To change price, cancel unreserved remainder and create new listing; no in-place price changes in MVP; reserved order price unchanged. | BD-024 | UC-008,010 |
 | BR-062 | New verified receiving account applies only to newly created payment/payout instructions; existing instructions retain original destination. | BD-025 | UC-006,009,015 |
@@ -653,8 +664,8 @@ BR-046–064 reflect confirmed policy; technical implementation and detailed evi
 |---|---|---|
 | BR-065 | Both offering approvals bind to one material version; changed principal/terms invalidate approvals before issuance. | Confirmed policy; BD-028 |
 | BR-066 | Order snapshots quantity, unit price, amount, payee and risk status; risk acknowledgement binds to material disclosure version; change before payment requires renewed consent. | Confirmed policy; BD-029 |
-| BR-067 | If risk materially changes after authorization, verify payment status and route to reconciliation; never assume buyer consent, release paid reservation or silently redirect money. | Confirmed policy; BD-029 |
-| BR-068 | A reservation is a subset of listing lock; checkout deadline is 10 minutes from order creation; release after expiry only when external nonpayment is definitive; unknown status blocks release until reconciliation. | Confirmed policy; BD-030 |
+| BR-067 | If risk materially changes after authorization, verify payment status and route to reconciliation; never assume buyer consent, release paid Quote Lock or silently redirect money. | Confirmed policy; BD-029 |
+| BR-068 | Quote Lock is a subset of Listing Lock on Secondary, or directly holds offered Bank units on Primary. Quote and Quote Lock created atomically; one Order on valid acceptance, original deadline = Quote creation + 10 minutes. Release only when no executable or paid transfer remains or authorized resolution is verified; unknown status blocks release. | Confirmed revised policy; BD-030-R1 |
 | BR-069 | If original receiving account cannot receive payment, verify old instruction terminal failure/no transfer before creating a new authorized attempt to newly verified destination; retain both records. | Confirmed policy; BD-031 |
 | BR-070 | Approved financial facts are not edited in place; correction is a traceable separately authorized adjustment that preserves previous postings and avoids duplicate payout. | Proposed detail of BR-045; correction workflow pending |
 
@@ -671,11 +682,11 @@ These checks are cumulative, not alternative; overdue permission never overrides
 | Independent valid suspension | Denied for affected source | Denied for affected source |
 | Offering closed but loan otherwise eligible | Denied new primary orders | Independent secondary trading remains eligible |
 
-Existing orders: BD-021 applies only to otherwise eligible reservations within their original deadline. BD-022 protects outstanding reserved units. Risk/status change and payment uncertainty are handled separately; a completed trade is not retroactively undone by a later default.
+Existing orders: BD-021 applies only to otherwise eligible Quote Locks within their original deadline. BD-022 protects outstanding reserved units. Risk/status change and payment uncertainty are handled separately; a completed trade is not retroactively undone by a later default.
 
 ### 2.6.6 Quantity and cash invariants
 
-Let H be seller holdings in a token class, L total currently locked for listings (including reserved units), R reservations within L, and A unreserved listed quantity. For one listing, remaining locked quantity = A + R. Across listings, 0 <= total L <= H; free unlisted quantity = H - total L. No double deduction of R. For an order, quantity is positive whole units; total payment = quantity × agreed unit price, excluding fees unless later approved. Settlement reduces seller holding and corresponding lock/reservation and increases buyer holding by equal quantity; total outstanding supply unchanged by transfer.
+Let H be seller holdings in a token class, L total currently locked for listings (including reserved units), R Quote Locks within L, and A unreserved listed quantity. For one listing, remaining locked quantity = A + R. Across listings, 0 <= total L <= H; free unlisted quantity = H - total L. No double deduction of R. For an order, quantity is positive whole units; total payment = quantity × agreed unit price, excluding fees unless later approved. Settlement reduces seller holding and corresponding lock/Quote Lock and increases buyer holding by equal quantity; total outstanding supply unchanged by transfer.
 
 Example: H = 1,000, L = 1,000, R = 300, A = 700. Cancel unreserved remainder: L = 300, R = 300, A = 0, free = 700. Successful settlement: seller H = 700, L = R = 0; buyer increases by 300. If definitively unpaid instead, seller H = 1,000 and cancelled listing does not reopen.
 
@@ -700,7 +711,7 @@ All quantities and accounting semantics are logical, not a schema. Principal amo
 | RT-011 | Defaulted or matured loan | No new trades | 057 |
 | RT-012 | Offering closes, valid existing order remains eligible | May complete within original deadline | 058 |
 | RT-013 | Buyer paid; callback duplicated or settlement fails | At most one transfer; unresolved obligation preserved | 025,036,043 |
-| RT-014 | Payment status unknown after reservation expiry | No release until reconciled | 068 |
+| RT-014 | Payment status unknown after Quote Lock expiry | No release until reconciled | 068 |
 | RT-015 | Investor changes receiving account during submitted payout | Existing destination remains; new instructions use verified new account | 062 |
 | RT-016 | No synchronized repayment receipt on due date | Alert for dual status review, not automatic overdue/default | 063 |
 | RT-017 | Repayment exception/recovery submitted; Approver rejects | No new distribution or payout | 054,055 |
@@ -716,7 +727,8 @@ These are proposed business acceptance tests, not executed software tests.
 |---|---|---|
 | BD-028 | What if loan principal or material terms change after approval but before issuance? | Invalidate affected approvals and submit new version; do not issue on stale data. |
 | BD-029 | What if credit risk changes after Buyer creates an order? | Before authorization require refreshed disclosure/consent if materially changed; after authorization reconcile before deciding settlement/refund; never assume consent or automatic refund. |
-| BD-030 | How long reserve token for checkout? | 10-minute payment window; release only after verified terminal nonpayment. Unknown payment remains protected pending reconciliation. Configurable duration recommended; existing order deadline must not silently change. |
+| BD-030 | Historical Order-first checkout | Superseded by BD-030-R1; original 10-minute duration retained. |
+| BD-030-R1 | Quote-first checkout and Quote Lock | Generate immutable Quote and Quote Lock atomically; valid acceptance creates one Order; 10-minute window begins at Quote creation, never resets at acceptance; release only when no executable or paid transfer remains or authorized resolution is verified; unknown payment stays protected. |
 | BD-031 | What if payout destination is closed or invalid? | Keep unpaid entitlement; verify terminal nonpayment before creating authorized retry to newly verified account; no silent rerouting or new entitlement. |
 
 All four decisions confirmed by project owner. BD-030 duration is confirmed at 10 minutes and needs simulation/testing; external finality and late-payment semantics remain to specify. BD-031 does not promise real bank reversal. Detailed correction approvals, retry limits and exception SLAs remain open.
@@ -846,10 +858,11 @@ Reviewed Idea Specification v2.1 (blob 022e9526d485036c217d42996ee4d49a806c95aa)
 | BD-027 | Required overdue-risk acknowledgement before authorization | Confirmed | 064 |
 | BD-028 | Reapprove material changes before issuance | Confirmed | 065 |
 | BD-029 | Revalidate risk before authorization; reconcile after authorization | Confirmed | 066,067 |
-| BD-030 | 10-minute checkout; no release on unknown payment status | Confirmed | 068 |
+| BD-030 | Historical Order-first checkout | Superseded by BD-030-R1 | 068 |
+| BD-030-R1 | Quote-first, Quote Lock, single-use acceptance, 10 minutes from Quote creation; unknown protected | Confirmed | 068 |
 | BD-031 | Retry failed payout after definitive nonpayment to verified new account; same entitlement | Confirmed | 069 |
 
-35 entries: 30 active confirmed policies, 5 superseded IDs; original BD-001/002 variants not counted separately.
+36 entries: 30 active confirmed policies, 6 superseded IDs; original BD-001/002 variants not counted separately.
 
 ### 2.8.2 Consistency review
 
@@ -916,6 +929,13 @@ No final MVP commitment, database schema or validated financial formulas in this
 
 Owner confirmed the switch from manual recording to Mock Core Banking integration on 2026-11-27. BD-013-R1 and BD-019-R1 supersede BD-013 and BD-019 respectively; BR-054/055 and related processes/use cases updated. Maker-checker for recovery/corrections and unchanged BD-026 status confirmation are conservative scope boundaries; no real banking access, borrower portal, origination, or new guarantee. Only simulate repayment posting, transaction lookup/notification, and reconciliation for registered loans; simulator UI is an authorized demo control, not investor or borrower access. No requirement for a separate deployed microservice or complete banking product. Existing mock payment system still handles investor payments/payouts. Design source: [Mambu event triggers](https://docs.mambu.com/docs/event-triggers/) documents LOAN_REPAYMENT on posted repayment; [webhook notifications](https://docs.mambu.com/docs/webhook-notifications/) and [loan transactions](https://docs.mambu.com/api/api-v1/loantransactions/loan-transactions/) document notification and transaction retrieval. [OWASP webhook security](https://cheatsheetseries.owasp.org/cheatsheets/Webhook_Security_Cheat_Sheet.html) motivates authentication plus deduplication. These are reference patterns, not actual integration or an assertion of Mambu's exact approval policies. New test scenarios: valid posted repayment auto-allocates without manual approval; replay of same transaction (even new event ID) never reallocates; forged/unposted/mismatched event cannot allocate; missed event reconciled through authoritative transaction retrieval; late or reversed facts require traceable review; recovery continues dual approval. BD-020, FD-001–011 and pass-through financial mechanics unchanged.
 
+
+## Quote-first revision — BD-030-R1 (2026-11-27)
+
+Owner selected Listing Lock and Quote Lock terminology and authorized synchronization of the discussed Quote-first flow. Reference: TOSBI main tree 13b65c85ad3be3a5a77225bf9716ad84ab6ce9d3; [Quote](https://github.com/TOSBI-PROJECT/tosbi/blob/main/pricer/src/quote.ts), [makeQuote](https://github.com/TOSBI-PROJECT/tosbi/blob/main/pricer/src/service.ts), [buy_protection/check_capacity](https://github.com/TOSBI-PROJECT/tosbi/blob/main/contracts/protection/src/lib.rs). Source inspected: TOSBI signs a 30-second quote and reserves capital only on successful buy; CreditForge adapts to asynchronous bank payment by holding units at Quote generation, not by copying blockchain or signature scheme. 
+
+BD-030-R1 supersedes BD-030 timing and Order-first flow. Immutable Quote binds Buyer, seller/source, quantity, price, total, current principal, disclosure/risk version, destination and expiry. Valid acceptance (strictly before deadline) creates exactly one Order referencing original Quote and Quote Lock; replay returns same Order without new lock. No payment before acceptance. Quote Lock persists until completed Settlement or verified safe release. Before acceptance no executable payment instruction may exist; expired/cancelled Quote may release immediately if this invariant is verified atomically. After acceptance, expired checkout stops new authorization; pending/unknown or paid transfer stays protected. BD-021/022/024 protect existing eligible Quote Locks, including unaccepted Quotes, through original deadline, not just Orders; closure/cancellation prevents new Quotes, releases only unquoted units. On still-open eligible listing, release returns quantity to Listing Lock availability; on cancelled listing releases to free holdings. On suspended listing, retained Listing Lock is unavailable until valid resume/cancel. No reprice existing Quote; material changes require revalidation and renewed consent or safe replacement before authorization; after authorization reconcile. FD-012/013/016 unchanged; Seller owns until Settlement. Exact API/schema and anti-hoarding limits are design items, not new approved policies. Historical Order-first wording is superseded by this revision; financial rounding/cash holds are unrelated to Quote Locks.
+
 ## Revision history
 
 | Version | Change |
@@ -930,3 +950,4 @@ Owner confirmed the switch from manual recording to Mock Core Banking integratio
 | 0.8 | Confirm Gate 07; consolidate decisions, consistency, traceability and open issues; Gate 08 pending |
 | 1.0 | Owner confirms Gate 08; approve Phase 2 baseline and authorize Phase 3 Financial Rules Specification |
 | 1.1 | Owner confirms Mock Core Banking integration; supersede BD-013/019 with R1; update servicing process, rules and use cases |
+| 1.2 | Quote-first revision BD-030-R1; Listing Lock/Quote Lock terminology; original 10-minute deadline starts at Quote creation; existing locks protected; financial rules unchanged |
