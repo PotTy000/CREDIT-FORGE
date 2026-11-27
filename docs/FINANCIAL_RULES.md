@@ -1,9 +1,9 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.3 — Research-first interest calculation draft; F01 pending  
+**Version:** 0.4 — Tranche economics research and consolidated financial review  
 **Phase:** 3 — Financial Rules Specification  
 **Approved business baseline:** [BRD v1.0](./BRD.md), commit 0f7dd05dd65e21e53407ee611b3aaab0f37a4094  
-**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; remaining sections pending.
+**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; remaining sections pending.
 
 Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifies an invariant or calculation. Confirmed business decisions remain binding. New financial candidates are proposed until explicitly approved. No actual money, underwriting, bank integration or blockchain. Examples are illustrative, not financial advice or legal conclusions.
 
@@ -197,9 +197,83 @@ All tests are specifications, not executed software tests. Exact monetary precis
 
 No additional gate solely for this section. F01 (FD-001–005) remains pending; FD-006 (simple ACT/365 Fixed, fixed rates, no compounding) and FD-007 (calendar/effective time boundaries, detailed ownership cutoff deferred) are draft recommendations. Present one consolidated review after 3.3 or earlier if owner requests. No confirmed FD or BRD decision altered. FD-006 penalty exclusion is only a candidate; default contractual charges treatment must be explicit in 3.6.
 
-## 3.3–3.8 Pending
+## 3.3 Tranche & Tokenization Economics — research-first candidate
 
-- 3.3 Tranche & Tokenization Economics
+### 3.3.1 Reference mechanisms (2026-11-27)
+
+| Source | Observed mechanism | CreditForge adaptation |
+|---|---|---|
+| [Centrifuge legacy](https://docs.centrifuge.io/getting-started/legacy/), [Tinlake offering structure](https://docs.centrifuge.io/tinlake/further-information/offering-structure/), [pool constraints](https://docs.centrifuge.io/tinlake/further-information/liquidation/) | TIN junior first-loss, DROP senior fixed accrual, maximum senior ratio implicitly constrains minimum junior ratio. | Use fixed Senior coupon, Junior residual and configurable issuance ratio limits. Do not import pool NAV, epoch redemption or dynamic share prices. |
+| [Goldfinch V1 leverage model](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/leveragemodel), [liquidity providers](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/liquidityproviders), [sample economics](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/borrower-mechanics/goldfinchs-capital-providers/sample-backer-economics) | Senior capital linked to junior capital through leverage; senior yield reflects interest reallocation and reserve deductions; 4x is a historical example, not universal. | Use ratio/leverage arithmetic as an explanatory tool; no external Junior investors, protocol fees, leverage funding or reserve pool. |
+| [Mintos Notes](https://help.mintos.com/hc/en-us/articles/5625282806417-What-are-Notes), [final terms](https://help.mintos.com/hc/en-us/articles/5624165691921-What-are-Mintos-Notes-base-prospectuses-and-final-terms) | Notes have fixed nominal denomination (EUR 0.01 in described product), and final terms specify denomination, price, maturity, rate, transferred outstanding principal and other terms. | Separate denomination, issue price and current principal; use approved loan-specific terms. VND denomination and par primary price are local proposals, not Mintos rules. |
+
+Evidence: official indexed extracts retrieved this turn; no full contract audit or independent validation of risk calibration. Historical protocol mechanisms are not asserted to be current universal practice. BRD v1.0 unchanged.
+
+### 3.3.2 Principal and ratio
+
+Conditional on FD-005 full-basis issuance, P = eligible verified opening principal = S + J. With initial Senior share s and Junior share j, s+j=1; both positive. Initial leverage k=S/J=s/j. Example 80/20 gives 4x; 75/25 gives 3x. A configurable minimum initial Junior share can bound issuance, but neither source calibrates a safe minimum for CreditForge's individual loans. FD-008 candidate: issuer proposes ratio, approval verifies configured bounds and integral quantities; use 20% minimum Junior only as a proposed demo configuration, not a credit-risk standard. Do not add an unvalidated risk scoring system. Changes to issued contractual split prohibited under BR-010; outstanding ratio can change from actual Senior-first principal repayment/loss, not a change of contractual terms.
+
+No risk guarantee: at opening P=6bn, J=1.2bn, a final net principal recovery of 4bn implies 2bn principal loss, of which Junior absorbs 1.2bn and Senior 0.8bn. Collateral valuation is not recovery cash. LTV=P/collateral value is descriptive, not a calibrated probability or automatic loan approval. Bank holds all Junior and unsold Senior; same Senior rights for Bank and Investor.
+
+### 3.3.3 Coupon feasibility
+
+Reference Tinlake fixed Senior accrual and Goldfinch interest redistribution; CreditForge-specific simplification (FD-009): fixed Senior coupon rS > 0 and rS <= rB (borrower fixed annual rate), Junior receives residual eligible cash after obligations under 3.5. No separate guaranteed Junior coupon. Same day-count basis assumed under proposed FD-006. For a constant-balance period, scheduled gross borrower interest B=P*rB*d/365; Senior accrued interest A=S*rS*d/365. Expected gross residual B-A before costs, arrears and allocation rules. A <= B is necessary for the illustrated interest-only period, not proof of coverage under delinquency, costs, prepayment, or default. In general rS <= (P/S)*rB would satisfy this static inequality, but recommend conservative rS<=rB for simplicity; this is not a source-imposed cap. Do not automatically increase coupon when Senior ratio changes. No guaranteed payments or guaranteed Bank profit.
+
+Example P=6bn, S=4.8bn, J=1.2bn, rB=12%, rS=8%, 365 days constant principal, full interest receipt: borrower 720m, Senior 384m, gross residual 336m. If 50% Senior sold, Investor receives 192m, Bank Senior 192m and residual 336m, total Bank 528m. Junior implied gross residual yield 28% on its initial principal only in this illustrative full-payment scenario; not contractual coupon or forecast. Cash allocation priority pending 3.5. Bank's funding cost, expenses, taxes and losses excluded.
+
+### 3.3.4 Denomination, supply, price
+
+FD-010 candidate: fixed common original face value F=100,000 VND per unit for MVP, whole units, exact divisibility of P and S/J by F; reject incompatible proposal and return to issuer for adjustment before approval, never discard residual principal or round up issuance. F is local demo parameter, not sourced denomination; may be configurable before issuance, frozen per class after issuance. Prefer fixed nominal over fractional tokens. Compute integer N=P/F; issuer proposes integer Senior units NS and NJ=N-NS, both positive, then S=NS*F and J=NJ*F. Check derived actual ratio against bounds and disclose it; no arbitrary rounding of promised ratio. E.g. 6bn => 60,000 units; NS=48,000 and NJ=12,000 gives exact 80/20. If P=4,000,050,000, not divisible by 100,000; return incompatible proposal; do not silently tokenize 4bn or 4.0001bn. FD-005 full-basis choice remains pending.
+
+FD-011 candidate: Primary initial unit price at par (F); if normal principal repayment occurs while offering remains open, proposed primary sale at current remaining principal per unit, subject to exact money precision and updated disclosure/approval rules, or suspend affected offering until compatible revalidation. Do not keep charging original face for already returned principal by default. No new issuance, top-up or reopening closed offering (BD-015). Existing orders retain price snapshot and are revalidated under material change controls; paid orders reconciled, not silently repriced. Exact open-offering prepayment policy and price rounding to be resolved in 3.5/3.8 and detailed requirements. Secondary seller sets fixed asking price independent of nominal/current principal (BR-013–015); coupon unchanged. No dynamic NAV or automated pricing.
+
+For FD-004 candidate, per-tranche current principal per unit = remaining tranche rights / issued units (before retirement); factor = remaining / opening tranche rights. If Senior-first 2bn principal repayment from 6bn example, S=2.8bn, J=1.2bn, NS=48k, current Senior principal per unit 58,333.333... VND. Junior remains 100k. Keep high precision; no early rounding. Zero remaining Senior principal blocks new Senior purchases under proposed rule; preserve accrued claims and pending obligations. Final retirement pending.
+
+### 3.3.5 Candidate rules and tests
+
+| Rule | Candidate |
+|---|---|
+| FR-018 | Initial tranche principal sums to eligible issued principal; both tranches positive |
+| FR-019 | Issuer proposes integer tranche units; initial Junior ratio meets configured minimum (FD-008) |
+| FR-020 | Fixed Senior coupon positive and no greater than borrower rate; Junior residual not guaranteed (FD-009) |
+| FR-021 | Exact denomination divisibility and integer supply; no silent residual or overissue (FD-010) |
+| FR-022 | Initial primary price at par; after principal change revalidate current rights and new-order price (FD-011) |
+| FR-023 | Separate original face, remaining principal, market price and coupon |
+| FR-024 | Bank retains Junior and unsold Senior; same Senior rights; no change to borrower debt on sale |
+
+| Test | Input | Expected |
+|---|---|---|
+| FT-020 | P=6bn,F=100k,NS=48k | NJ=12k, S=4.8bn,J=1.2bn,20% Junior |
+| FT-021 | Proposed minimum Junior 20%, NS=54k of 60k | reject 10% Junior |
+| FT-022 | P=4,000,050,000,F=100k | incompatible denomination; no issuance |
+| FT-023 | rB=12%, rS=13% | reject under proposed cap |
+| FT-024 | Full year constant 6bn,12%, S=4.8bn,8% | accrued borrower 720m, Senior 384m, gross residual 336m if fully received |
+| FT-025 | Senior-first 2bn principal receipt | S=2.8bn,J=1.2bn; same unit counts; current Senior 58,333.333... |
+| FT-026 | Bank sells half of Senior at original par | proceeds 2.4bn; bank remaining Senior 2.4bn + Junior 1.2bn; issued total unchanged |
+| FT-027 | Primary order pending during material principal reduction | revalidate, no silent repricing, reconcile paid orders |
+
+Tests proposed and not executed. FT-006 old pro-rata example remains alternative, not Senior-first expected outcome.
+
+### 3.3.6 Consolidated Financial Review F01–F03
+
+| FD | Recommended candidate | Basis |
+|---|---|---|
+| FD-001 | Monthly interest + bullet principal | Maple |
+| FD-002 | Full and partial unscheduled prepayment | Maple/Goldfinch adapted |
+| FD-003 | Senior-first normal principal; pro rata within tranche | Goldfinch priority adapted |
+| FD-004 | Keep units, reduce principal per unit, per-tranche factor | Mintos sink factor adapted |
+| FD-005 | Full eligible outstanding principal representation | CreditForge retention model |
+| FD-006 | Fixed annual rates, simple ACT/365 Fixed, no compounding | Mintos reducing balance + VN banking convention |
+| FD-007 | Vietnam calendar, actual intervals, no double accrual or buyer accrual before settlement; exact ownership cutoff deferred | BD-003 and Mintos |
+| FD-008 | Issuer proposes ratio with configurable minimum Junior; 20% proposed demo default | Tinlake constraints, Goldfinch leverage |
+| FD-009 | Fixed positive Senior coupon <= borrower rate; Junior residual | Tinlake fixed coupon, local cap |
+| FD-010 | 100k VND common face default, integral units and exact full-basis divisibility | Mintos denomination concept; local parameter |
+| FD-011 | Primary at par initially; revalidate current principal and price after material repayment | Local fixed-price simplification |
+
+All remain proposed until owner confirmation. Approve as a bundle to avoid unnecessary gates; explicit exceptions may be named. Detailed ownership cutoff, priority for mixed receipts, payout precision, prepayment while offering open and final retirement remain pending. Research-first does not mean exact replication of incompatible pool mechanisms.
+
+## 3.4–3.8 Pending
+
 - 3.4 Ownership & Accrued Interest
 - 3.5 Repayment Waterfall
 - 3.6 Default, Recovery & Loss Waterfall
@@ -213,3 +287,4 @@ No additional gate solely for this section. F01 (FD-001–005) remains pending; 
 | 0.1 | Start Phase 3 from approved BRD v1.0; draft 3.1 and Financial Review Gate F01 |
 | 0.2 | Verify external reference mechanisms; revise FD-003 recommendation to Senior First; refine FD-004 with per-tranche Principal Factor; F01 still pending |
 | 0.3 | Research Mintos daily accrual, Vietnamese 365-day convention and Goldfinch product differences; draft 3.2 and FD-006/007; F01 still pending |
+| 0.4 | Research tranche constraints, leverage, fixed coupon and denomination; draft 3.3, FD-008–011, FR-018–024 and FT-020–027; consolidated review pending |
