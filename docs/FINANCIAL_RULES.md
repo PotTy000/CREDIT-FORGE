@@ -1,9 +1,9 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.4 — Tranche economics research and consolidated financial review  
+**Version:** 0.5 — FD-001–011 confirmed; ownership and accrued interest draft  
 **Phase:** 3 — Financial Rules Specification  
 **Approved business baseline:** [BRD v1.0](./BRD.md), commit 0f7dd05dd65e21e53407ee611b3aaab0f37a4094  
-**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; remaining sections pending.
+**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; remaining sections pending.
 
 Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifies an invariant or calculation. Confirmed business decisions remain binding. New financial candidates are proposed until explicitly approved. No actual money, underwriting, bank integration or blockchain. Examples are illustrative, not financial advice or legal conclusions.
 
@@ -58,9 +58,9 @@ Even a bullet schedule may permit early repayment under external contract. Credi
 
 Full prepayment: Bank confirms actual receipt and principal component; stop new orders once principal fully repaid/early redemption confirmed; reconcile in-flight orders under BD-029, retain pending payout/refund obligations; accrue interest only on the eligible outstanding basis until the applicable cutoff; distribute principal and settle any remaining interest rights according to later waterfall. Do not automatically mark all payouts complete. Token retirement and closure are separate from cash payout (3.5/3.6).
 
-Partial prepayment: compare (A) proportional reduction of remaining principal across all tranches and holders versus (B) Senior-first principal reduction. A preserves relative principal split and first-loss fraction; B reduces Senior before Junior, increases remaining Junior buffer fraction and changes bank economics. Neither is implied by junior first-loss rule alone, which concerns losses, not ordinary principal repayment. Revised recommendation FD-003 after reference research: Senior-first normal principal reduction, with pro-rata allocation within each tranche, including Bank-retained Senior. Pro-rata across tranches remains an alternative. This is a proposed CreditForge rule, not a confirmed decision or exact reproduction of Goldfinch. Preserve equal treatment within Senior including bank-retained units.
+Partial prepayment: compare (A) proportional reduction of remaining principal across all tranches and holders versus (B) Senior-first principal reduction. A preserves relative principal split and first-loss fraction; B reduces Senior before Junior, increases remaining Junior buffer fraction and changes bank economics. Neither is implied by junior first-loss rule alone, which concerns losses, not ordinary principal repayment. Confirmed FD-003 after reference research: Senior-first normal principal reduction, with pro-rata allocation within each tranche, including Bank-retained Senior. Pro-rata across tranches remains an alternative. This is a confirmed CreditForge adaptation, not an exact reproduction of Goldfinch. Preserve equal treatment within Senior including bank-retained units.
 
-Proposed FD-004: retain token unit count through partial normal principal repayments, reduce remaining principal per unit proportionally; original face value remains historical denomination, current principal per unit is the financial base and must be disclosed. Do not confuse nominal, remaining principal, asking price and market value. Full redemption/retirement policy in 3.5/3.6. Alternative pro-rata token retirement creates fractional-unit and lot rounding challenges.
+Confirmed FD-004: retain token unit count through partial normal principal repayments, reduce remaining principal per unit proportionally; original face value remains historical denomination, current principal per unit is the financial base and must be disclosed. Do not confuse nominal, remaining principal, asking price and market value. Full redemption/retirement policy in 3.5/3.6. Alternative pro-rata token retirement creates fractional-unit and lot rounding challenges.
 
 Example: opening 4bn, Senior 3.2bn, Junior 0.8bn, 40,000 units at 100k original face. Partial principal receipt 1bn applied pro rata: Senior 0.8bn, Junior 0.2bn, remaining S=2.4bn and J=0.6bn; 40,000 units remain at 75k current principal each. If 50% Senior externally held, external Senior principal payout 0.4bn, Bank retained Senior 0.4bn and Junior 0.2bn. Sum =1bn; remaining rights 3bn. Future interest on remaining principal; no double payment of already returned principal. Allocation/rounding precision in 3.5/3.8. A holder who sells after principal reduction transfers remaining rights, not already-distributed principal. Price not automatically reset to remaining principal.
 
@@ -73,12 +73,12 @@ During a material principal change, pending orders need revalidation of disclose
 | FR-001 | Issuance based on verified eligible outstanding principal; no prior repaid principal | Inherited BD-017 |
 | FR-002 | Material opening snapshot change requires reapproval | Inherited BD-028 |
 | FR-003 | Expected repayment is not receipt; only distinct approved external receipt drives allocation | Inherited BD-013/019 |
-| FR-004 | Full-basis issuance represents opening principal; Bank initially owns all rights | Proposed clarification; FD-005 |
+| FR-004 | Full-basis issuance represents opening principal; Bank initially owns all rights | Confirmed FD-005 |
 | FR-005 | Remaining issued principal rights reconcile to issued principal minus applied principal and recognized loss | Proposed invariant |
-| FR-006 | Monthly interest and bullet principal remaining schedule only | Proposed FD-001 |
-| FR-007 | Support confirmed full/partial unscheduled principal prepayment | Proposed FD-002 |
-| FR-008 | Normal principal reduction Senior-first across tranches, pro rata within each tranche | Proposed FD-003 |
-| FR-009 | Partial principal payment reduces current principal per unit; unit count unchanged | Proposed FD-004 |
+| FR-006 | Monthly interest and bullet principal remaining schedule only | Confirmed FD-001 |
+| FR-007 | Support confirmed full/partial unscheduled principal prepayment | Confirmed FD-002 |
+| FR-008 | Normal principal reduction Senior-first across tranches, pro rata within each tranche | Confirmed FD-003 |
+| FR-009 | Partial principal payment reduces current principal per unit; unit count unchanged | Confirmed FD-004 |
 | FR-010 | No new trades after full principal repayment; reconcile pending orders and unpaid obligations separately | Proposed detail; FD-002 |
 | FR-011 | Actual principal applied and payout status separate; no double reduction or payout | Inherited BR-025/040–042; details pending |
 
@@ -97,7 +97,7 @@ During a material principal change, pending orders need revalidation of disclose
 | FT-009 | Verified overdue with positive principal and otherwise eligible listing | Trading remains allowed with risk acknowledgement (BD-020/027) |
 | FT-010 | Receipt amount exceeds outstanding principal | Do not apply excess to principal; require classification/review |
 
-### 3.1.8 Financial Review Gate F01 — proposed, revised after research
+### 3.1.8 Financial Review Gate F01 — confirmed in consolidated review
 
 | ID | Choice | Recommendation |
 |---|---|---|
@@ -107,7 +107,7 @@ During a material principal change, pending orders need revalidation of disclose
 | FD-004 | Partial prepayment token handling | Maintain unit quantity; reduce remaining principal per unit; disclose before trading |
 | FD-005 | Issuance principal basis | Full eligible outstanding principal, Bank retains unsold Senior and all Junior; do not confuse sold amount and issuance basis |
 
-All five are proposed. FD-003/004 depend on FD-002 if partial prepayment permitted. Full-basis issuance is a proposed clarification of existing BRD's upper bound and bank retention, not a new confirmed decision. Early prepayment fee, interest cutoff, recovery ordering, precision, token retirement and exception handling remain unresolved. No real banking policy inferred.
+FD-001–005 confirmed by owner in consolidated review; Senior First is selected, Pro Rata across tranches is historical comparison only. Full eligible outstanding principal is confirmed. Early prepayment fee, interest cutoff, recovery ordering, precision, token retirement and exception handling remain unresolved. No real banking policy inferred.
 
 ### 3.1.9 External reference research — FD-001–005 (2026-11-27)
 
@@ -129,7 +129,7 @@ For each tranche T, proposed Principal Factor f_T = remaining principal rights /
 
 Previous pro-rata examples/FT-006 remain alternative comparison vectors, not the recommended Senior-first policy. Add FT-011: 4bn opening (3.2bn Senior, 0.8bn Junior), 1bn normal principal receipt -> Senior 2.2bn, Junior 0.8bn, total 3bn; 32k Senior units at 68,750 VND remaining and 8k Junior at 100,000 VND. FT-012: Senior exhausted by principal repayment while Junior positive -> no new Senior trades under proposed zero-principal rule, preserve all accrued claims/payables. Both tests are proposed, not executed.
 
-All FD-001–005 remain unconfirmed; research does not change BRD v1.0 or BD-020. FD-003 recommendation revised, FD-004 refined, other recommendations retained. 
+FD-001–005 confirmed in consolidated review; BRD v1.0 and BD-020 unchanged. FD-003 recommendation revised, FD-004 refined, other recommendations retained. 
 
 ## 3.2 Interest Calculation — research-first candidate
 
@@ -146,11 +146,11 @@ Reviewed 2026-11-27; distinguish specific products, not universal conventions.
 | [Maple borrower introduction](https://docs.maple.finance/maple-for-borrowers) (indexed text) | Recurring interest, principal at term end. | F01 schedule reference. |
 | [Mintos secondary interest](https://help.mintos.com/hc/en-us/articles/360001361917-How-is-interest-divided-between-the-seller-and-buyer-of-an-investment-on-the-Secondary-Market) (full search extract) | Buyer accrues from purchase; seller stops at sale, with unpaid interest during listing-to-sale period paid when underlying repayment arrives. | Support BD-003; complete claim rights including pre-listing arrears in 3.4, do not assume source covers all cases. |
 
-F01 remains unconfirmed. Research-first policy: use coherent reference mechanisms where compatible, document adaptations; do not equate Goldfinch callable product with two-tranche Borrower Pools.
+F01 confirmed in consolidated review. Research-first policy: use coherent reference mechanisms where compatible, document adaptations; do not equate Goldfinch callable product with two-tranche Borrower Pools.
 
 ### 3.2.2 Candidate interest basis
 
-FD-006 proposed: fixed annual borrower rate and fixed annual Senior coupon; simple ACT/365 Fixed, no compounding of unpaid interest, no additional penalty/default coupon in MVP candidate. No claim of altering external loan contract; admission requires compatible terms, any incompatible receipt/charges classified separately and reviewed, not discarded. Distinguish contractual Borrower principal and issued rights after impairment or loss.
+Confirmed FD-006: fixed annual borrower rate and fixed annual Senior coupon; simple ACT/365 Fixed, no compounding of unpaid interest, no additional penalty/default coupon in MVP candidate. No claim of altering external loan contract; admission requires compatible terms, any incompatible receipt/charges classified separately and reviewed, not discarded. Distinguish contractual Borrower principal and issued rights after impairment or loss.
 
 For constant balance B, annual decimal rate r and elapsed actual calendar days d: I=B*r*d/365. For changing balances, sum over nonoverlapping intervals. Denominator stays 365 in leap years. Monthly due schedule determines payment dates, not an assumption of 30 days per month. Rates on 360 and 365 basis are not interchangeable at the same nominal APR. Junior earns eligible residual cash under later waterfall rather than independently guaranteed coupon.
 
@@ -158,7 +158,7 @@ Borrower accrual uses contractual outstanding principal and borrower rate. Senio
 
 ### 3.2.3 Time boundary and effective facts
 
-FD-007 proposed: use Vietnam business calendar dates (Asia/Ho_Chi_Minh), actual elapsed days, consistent half-open intervals for accrual; for principal, effective applied receipt date is boundary subject to approved simulated contract day-count convention. Use a consistent allocation cutoff between old and new holders, never credit a buyer for time before completed settlement (BD-003). Exact intraday settlement/date allocation, same-day multiple transfers, pre-issuance accrued claims, receipt backdating, business-day due date adjustment and historical unpaid interest must be resolved in 3.4 and 3.5. Do not silently round settlement back to start of day. If daily cutoff cannot faithfully represent ownership, use finer time segments or explicit eligible settlement policy; review before implementation. Late-approved effective facts trigger reconciliation, not retroactive destructive edits.
+Confirmed FD-007; detailed cutoff proposed: use Vietnam business calendar dates (Asia/Ho_Chi_Minh), actual elapsed days, consistent half-open intervals for accrual; for principal, effective applied receipt date is boundary subject to approved simulated contract day-count convention. Use a consistent allocation cutoff between old and new holders, never credit a buyer for time before completed settlement (BD-003). Exact intraday settlement/date allocation, same-day multiple transfers, pre-issuance accrued claims, receipt backdating, business-day due date adjustment and historical unpaid interest must be resolved in 3.4 and 3.5. Do not silently round settlement back to start of day. If daily cutoff cannot faithfully represent ownership, use finer time segments or explicit eligible settlement policy; review before implementation. Late-approved effective facts trigger reconciliation, not retroactive destructive edits.
 
 ### 3.2.4 Worked examples (unrounded until presentation)
 
@@ -174,7 +174,7 @@ Example 4: one Senior token with remaining principal 60k, purchased at 55k, coup
 
 | Rule | Candidate |
 |---|---|
-| FR-012 | Simple actual-days /365 interest, fixed annual rate, no compounding; FD-006 pending |
+| FR-012 | Simple actual-days /365 interest, fixed annual rate, no compounding; FD-006 confirmed |
 | FR-013 | Split principal/accrual intervals at approved effective changes; no gaps or double counting |
 | FR-014 | Senior interest on remaining principal rights, not purchase price or original face after repayment |
 | FR-015 | Junior residual depends on available cash and approved waterfall, not separate guaranteed coupon |
@@ -195,7 +195,7 @@ All tests are specifications, not executed software tests. Exact monetary precis
 
 ### 3.2.6 Consolidated review approach
 
-No additional gate solely for this section. F01 (FD-001–005) remains pending; FD-006 (simple ACT/365 Fixed, fixed rates, no compounding) and FD-007 (calendar/effective time boundaries, detailed ownership cutoff deferred) are draft recommendations. Present one consolidated review after 3.3 or earlier if owner requests. No confirmed FD or BRD decision altered. FD-006 penalty exclusion is only a candidate; default contractual charges treatment must be explicit in 3.6.
+Consolidated review confirms FD-001–007; precise ownership cutoff remains to specify in 3.4. BRD decisions unchanged. FD-006 penalty exclusion is only a candidate; default contractual charges treatment must be explicit in 3.6.
 
 ## 3.3 Tranche & Tokenization Economics — research-first candidate
 
@@ -211,7 +211,7 @@ Evidence: official indexed extracts retrieved this turn; no full contract audit 
 
 ### 3.3.2 Principal and ratio
 
-Conditional on FD-005 full-basis issuance, P = eligible verified opening principal = S + J. With initial Senior share s and Junior share j, s+j=1; both positive. Initial leverage k=S/J=s/j. Example 80/20 gives 4x; 75/25 gives 3x. A configurable minimum initial Junior share can bound issuance, but neither source calibrates a safe minimum for CreditForge's individual loans. FD-008 candidate: issuer proposes ratio, approval verifies configured bounds and integral quantities; use 20% minimum Junior only as a proposed demo configuration, not a credit-risk standard. Do not add an unvalidated risk scoring system. Changes to issued contractual split prohibited under BR-010; outstanding ratio can change from actual Senior-first principal repayment/loss, not a change of contractual terms.
+Under confirmed FD-005 full-basis issuance, P = eligible verified opening principal = S + J. With initial Senior share s and Junior share j, s+j=1; both positive. Initial leverage k=S/J=s/j. Example 80/20 gives 4x; 75/25 gives 3x. A configurable minimum initial Junior share can bound issuance, but neither source calibrates a safe minimum for CreditForge's individual loans. FD-008 confirmed policy: issuer proposes ratio, approval verifies configured bounds and integral quantities; use 20% minimum Junior only as a proposed demo configuration, not a credit-risk standard. Do not add an unvalidated risk scoring system. Changes to issued contractual split prohibited under BR-010; outstanding ratio can change from actual Senior-first principal repayment/loss, not a change of contractual terms.
 
 No risk guarantee: at opening P=6bn, J=1.2bn, a final net principal recovery of 4bn implies 2bn principal loss, of which Junior absorbs 1.2bn and Senior 0.8bn. Collateral valuation is not recovery cash. LTV=P/collateral value is descriptive, not a calibrated probability or automatic loan approval. Bank holds all Junior and unsold Senior; same Senior rights for Bank and Investor.
 
@@ -223,9 +223,9 @@ Example P=6bn, S=4.8bn, J=1.2bn, rB=12%, rS=8%, 365 days constant principal, ful
 
 ### 3.3.4 Denomination, supply, price
 
-FD-010 candidate: fixed common original face value F=100,000 VND per unit for MVP, whole units, exact divisibility of P and S/J by F; reject incompatible proposal and return to issuer for adjustment before approval, never discard residual principal or round up issuance. F is local demo parameter, not sourced denomination; may be configurable before issuance, frozen per class after issuance. Prefer fixed nominal over fractional tokens. Compute integer N=P/F; issuer proposes integer Senior units NS and NJ=N-NS, both positive, then S=NS*F and J=NJ*F. Check derived actual ratio against bounds and disclose it; no arbitrary rounding of promised ratio. E.g. 6bn => 60,000 units; NS=48,000 and NJ=12,000 gives exact 80/20. If P=4,000,050,000, not divisible by 100,000; return incompatible proposal; do not silently tokenize 4bn or 4.0001bn. FD-005 full-basis choice remains pending.
+FD-010 confirmed policy: fixed common original face value F=100,000 VND per unit for MVP, whole units, exact divisibility of P and S/J by F; reject incompatible proposal and return to issuer for adjustment before approval, never discard residual principal or round up issuance. F is local demo parameter, not sourced denomination; may be configurable before issuance, frozen per class after issuance. Prefer fixed nominal over fractional tokens. Compute integer N=P/F; issuer proposes integer Senior units NS and NJ=N-NS, both positive, then S=NS*F and J=NJ*F. Check derived actual ratio against bounds and disclose it; no arbitrary rounding of promised ratio. E.g. 6bn => 60,000 units; NS=48,000 and NJ=12,000 gives exact 80/20. If P=4,000,050,000, not divisible by 100,000; return incompatible proposal; do not silently tokenize 4bn or 4.0001bn. FD-005 full-basis choice remains pending.
 
-FD-011 candidate: Primary initial unit price at par (F); if normal principal repayment occurs while offering remains open, proposed primary sale at current remaining principal per unit, subject to exact money precision and updated disclosure/approval rules, or suspend affected offering until compatible revalidation. Do not keep charging original face for already returned principal by default. No new issuance, top-up or reopening closed offering (BD-015). Existing orders retain price snapshot and are revalidated under material change controls; paid orders reconciled, not silently repriced. Exact open-offering prepayment policy and price rounding to be resolved in 3.5/3.8 and detailed requirements. Secondary seller sets fixed asking price independent of nominal/current principal (BR-013–015); coupon unchanged. No dynamic NAV or automated pricing.
+FD-011 confirmed policy: Primary initial unit price at par (F); if normal principal repayment occurs while offering remains open, proposed primary sale at current remaining principal per unit, subject to exact money precision and updated disclosure/approval rules, or suspend affected offering until compatible revalidation. Do not keep charging original face for already returned principal by default. No new issuance, top-up or reopening closed offering (BD-015). Existing orders retain price snapshot and are revalidated under material change controls; paid orders reconciled, not silently repriced. Exact open-offering prepayment policy and price rounding to be resolved in 3.5/3.8 and detailed requirements. Secondary seller sets fixed asking price independent of nominal/current principal (BR-013–015); coupon unchanged. No dynamic NAV or automated pricing.
 
 For FD-004 candidate, per-tranche current principal per unit = remaining tranche rights / issued units (before retirement); factor = remaining / opening tranche rights. If Senior-first 2bn principal repayment from 6bn example, S=2.8bn, J=1.2bn, NS=48k, current Senior principal per unit 58,333.333... VND. Junior remains 100k. Keep high precision; no early rounding. Zero remaining Senior principal blocks new Senior purchases under proposed rule; preserve accrued claims and pending obligations. Final retirement pending.
 
@@ -254,9 +254,9 @@ For FD-004 candidate, per-tranche current principal per unit = remaining tranche
 
 Tests proposed and not executed. FT-006 old pro-rata example remains alternative, not Senior-first expected outcome.
 
-### 3.3.6 Consolidated Financial Review F01–F03
+### 3.3.6 Consolidated Financial Review F01–F03 — confirmed
 
-| FD | Recommended candidate | Basis |
+| FD | Confirmed policy | Basis |
 |---|---|---|
 | FD-001 | Monthly interest + bullet principal | Maple |
 | FD-002 | Full and partial unscheduled prepayment | Maple/Goldfinch adapted |
@@ -270,11 +270,69 @@ Tests proposed and not executed. FT-006 old pro-rata example remains alternative
 | FD-010 | 100k VND common face default, integral units and exact full-basis divisibility | Mintos denomination concept; local parameter |
 | FD-011 | Primary at par initially; revalidate current principal and price after material repayment | Local fixed-price simplification |
 
-All remain proposed until owner confirmation. Approve as a bundle to avoid unnecessary gates; explicit exceptions may be named. Detailed ownership cutoff, priority for mixed receipts, payout precision, prepayment while offering open and final retirement remain pending. Research-first does not mean exact replication of incompatible pool mechanisms.
+Owner explicitly confirmed all FD-001–011 without exceptions. Policies approved; outstanding implementation details below remain open. Detailed ownership cutoff, priority for mixed receipts, payout precision, prepayment while offering open and final retirement remain pending. Research-first does not mean exact replication of incompatible pool mechanisms.
 
-## 3.4–3.8 Pending
+## 3.4 Ownership & Accrued Interest — research-first draft
 
-- 3.4 Ownership & Accrued Interest
+### 3.4.1 Source evidence (2026-11-27)
+
+Official Mintos Help Center article [Secondary Market interest allocation](https://help.mintos.com/hc/en-us/articles/360001361917-How-is-interest-divided-between-the-seller-and-buyer-of-an-investment-on-the-Secondary-Market), updated April 19 2022, retrieved as full indexed text: seller stops accruing at completed sale, buyer starts from purchase date, unpaid interest during listing-to-sale interval remains payable to previous investor after borrower payment. Article does not establish intraday convention, all pre-listing arrears treatment or overdue trading eligibility. [Loan interest calculation](https://help.mintos.com/hc/en-us/articles/25040259965457-How-is-interest-for-investments-in-loans-calculated) confirms daily accrual on reducing invested capital using 360 denominator; CreditForge uses confirmed 365. [Bond pricing](https://help.mintos.com/hc/en-us/articles/45705961040017-Understanding-bond-pricing-Premiums-discounts-and-accrued-interest) explains a different model in which buyer compensates seller for accrued coupon and receives full next coupon if paid. Do not mix bond and loan models. [Pending payments](https://help.mintos.com/hc/en-us/articles/360007068118-Does-pending-payments-mean-lending-companies-or-borrowers-are-late) distinguishes borrower repayment from lender remittance. No Mintos-specific remittance penalty imported. All above retrieved indexed official text; no contract-level audit.
+
+### 3.4.2 Selected reference direction and local choices
+
+Confirmed BD-003, BR-018/038, FD-006/007 require no buyer accrual before completed settlement. Recommended FD-012: extend Mintos loan model to all earned eligible unpaid ordinary interest, including pre-listing and overdue interest, retained by owner who earned it; future principal rights and future interest transfer only at settlement. Buyer pays agreed listing price, no mandatory accrued-interest surcharge. No contractual entitlement to interest earned before issuance; Bank retains pre-issuance borrower interest separately. A past owner with zero units may still have unpaid claims/payables. Principal payment already economically applied before transfer belongs to the entitled owner at its effective cutoff, not the later buyer; exact receipt cutoff and late entry reconciliation in 3.5. Do not transfer or recreate a previously posted payout.
+
+FD-013 recommended precise cutoff: actual settlement timestamp, Asia/Ho_Chi_Minh business dates, allocate each actual calendar day's ordinary accrual by elapsed ownership fraction of that day; half-open intervals [start,end), old owner until settlement, new owner from settlement. For ordinary 24-hour Vietnam days, fraction = seconds held / 86400; use exact timestamp precision and rational/fixed precision, not rounded hours. This is a local extension of Mintos daily calculation, not its verified intraday rule. Split also at effective principal changes. Borrower day-count contract boundary and token ownership subdivision must reconcile; never invent extra coupon days. Candidate no compounding and no interest on unpaid interest. Default and maturity accrual end and penalty treatment deferred to 3.6. Deterministic effective timestamp ordering for simultaneous events and late facts required; reconcile exceptions, never silently rewrite settled history.
+
+### 3.4.3 Accrual formula and ownership conservation
+
+For each interval k with constant holder quantity q, remaining Senior principal per unit p, annual coupon r and fractional elapsed days d: I_holder = sum(q*p*r*d/365). Sum all holder entitlements (including retained Bank Senior) equals total Senior accrual over same intervals before rounding. Use ownership events not current portfolio snapshot. Transfer does not change supply, borrower obligation or original coupon; partial listing fill splits only settled quantity. Seller keeps units and accrual during listing, reservation and unconfirmed payment. Primary unsold Senior earns Bank entitlement until settlement; Junior residual handled separately. Do not count both Bank and Investor for the same units/time. No guarantee of accrued cash payment.
+
+### 3.4.4 Worked examples
+
+Example A: 100 Senior tokens at remaining principal 100,000 VND each, 8% annual coupon, 30-day interval. A owns first 12 days, B next 18 days: A=26,301.369863..., B=39,452.054795..., total=65,753.424657... VND before rounding. Trade consideration for 100 units at 95k is 9.5m, separate from claims. Full actual interest cash assumed only for example. Listing date does not change entitlement.
+
+Example B: same quantity and principal, trade at 12:00 on a 24-hour day, A/B each holds half day. Each accrues 1,095.890410... VND; total daily 2,191.780821... VND. Actual time subdivision is local candidate FD-013; no double accrual from calendar dates.
+
+Example C: A owns 100 units for 30 days; accrued 65,753.424657... unpaid and borrower verified overdue; B buys at 80k/unit after required warning/acknowledgement (BD-020/027). A retains unpaid claim; B begins new accrual after settlement. If actual interest receipt later is insufficient, apply 3.5 Senior claim priority and partial allocation; no guaranteed A payout or historical interest windfall to B. Purchase discount does not compensate or transfer historical claim automatically.
+
+Example D: Bank holds 48k Senior units, sells 10k after 15 days. Until settlement Bank accrues on all 48k; afterwards Bank 38k and Investor 10k; sum remains 48k. If Investor subsequently lists 1000 and only 300 settle, transfer accrual on 300 only. If principal falls during period, use new per-tranche factor after effective boundary.
+
+### 3.4.5 Claim lifecycle and portfolio
+
+Accrued (earned under schedule) -> eligible due/unpaid -> allocated from approved actual receipt -> payout pending -> confirmed paid; failed payout retains outstanding payable, not renewed accrual or duplicate distribution. State may be derived from cumulative amounts rather than single status for partially paid claims. Distinguish unpaid ordinary interest from allocated-but-not-paid cash and estimated future income. Maintain source interval, owner, class, quantity/basis, rate, receipt/distribution references and payout history; conceptual data not schema. Former owners retain access to their own outstanding claims and payment history. No cash wallet. Default loss on principal and write-off of unpaid interest separate; recognition/ordering deferred 3.6.
+
+### 3.4.6 Proposed rules and vectors
+
+| Rule | Policy |
+|---|---|
+| FR-025 | Seller retains earned unpaid ordinary interest including historical arrears; no required accrued-interest surcharge (FD-012 proposed) |
+| FR-026 | Ownership changes only at completed settlement; listing/reservation/confirmed payment alone do not change accrual (inherited BD-003) |
+| FR-027 | Divide actual calendar day by effective ownership time; half-open intervals; no duplicate ownership accrual (FD-013 proposed) |
+| FR-028 | Apply current remaining principal per tranche and quantity over each interval; conserve total Senior accrual |
+| FR-029 | Former owner retains accrued claims and allocated payables independently of holdings; payout retries do not recreate entitlement |
+| FR-030 | Distinguish unpaid accrued interest, approved allocation, pending payout and paid cash; actual receipts limit distribution |
+| FR-031 | Verified overdue trade requires acknowledgement; disclose historical unpaid interest exclusion from transferred rights under FD-012; reconcile changed risk per BD-029 |
+
+| Test | Input | Expected |
+|---|---|---|
+| FT-028 | 100 units at 100k,8%, 12/18 days | A 26301.369863..., B 39452.054795..., total 65753.424657... |
+| FT-029 | Same holding, midday settlement | A/B 1095.890410... each; total 2191.780821... |
+| FT-030 | Listing created but no settlement | Seller retains all accrual |
+| FT-031 | Sale after 30 days unpaid overdue interest | A retains historical claim, B starts after settlement; warning mandatory |
+| FT-032 | 1000 units listed, 300 sold | 300 transfer only; 700 retain seller accrual |
+| FT-033 | Bank sells 10k of 48k | Bank 38k + buyer 10k after settlement; before settlement Bank 48k |
+| FT-034 | Seller sold all units, allocated payout fails | Outstanding payable preserved; safe retry only |
+| FT-035 | Multiple transfers/principal change same day | Split nonoverlapping intervals, total accrual conserved; ordering/cutoff explicit |
+| FT-036 | Duplicate receipt or late correction | no duplicate entitlement/payment; reconcile separately |
+
+Tests specified, not executed. Monetary rounding deferred 3.8.
+
+### 3.4.7 Review approach
+
+FD-012 (seller retains earned unpaid ordinary interest, including arrears; no compulsory accrued surcharge) and FD-013 (intraday ownership allocation within actual calendar-day ACT/365) are proposed extensions. Owner confirmed FD-001–011 only. Bundle FD-012/013 with upcoming waterfall decisions rather than interrupting for another isolated gate. Partial interest receipt priority, principal effective cutoff and default interest remain open. BRD v1.0 and BD-020 ALLOW unchanged.
+
+## 3.5–3.8 Pending
 - 3.5 Repayment Waterfall
 - 3.6 Default, Recovery & Loss Waterfall
 - 3.7 Investment Performance
@@ -288,3 +346,4 @@ All remain proposed until owner confirmation. Approve as a bundle to avoid unnec
 | 0.2 | Verify external reference mechanisms; revise FD-003 recommendation to Senior First; refine FD-004 with per-tranche Principal Factor; F01 still pending |
 | 0.3 | Research Mintos daily accrual, Vietnamese 365-day convention and Goldfinch product differences; draft 3.2 and FD-006/007; F01 still pending |
 | 0.4 | Research tranche constraints, leverage, fixed coupon and denomination; draft 3.3, FD-008–011, FR-018–024 and FT-020–027; consolidated review pending |
+| 0.5 | Confirm FD-001–011 without exceptions; research Mintos loan vs bond accrual; draft 3.4, FD-012/013, FR-025–031, FT-028–036 |
