@@ -1,9 +1,9 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.2 — Reference research; revised F01 proposal  
+**Version:** 0.3 — Research-first interest calculation draft; F01 pending  
 **Phase:** 3 — Financial Rules Specification  
 **Approved business baseline:** [BRD v1.0](./BRD.md), commit 0f7dd05dd65e21e53407ee611b3aaab0f37a4094  
-**Coverage:** 3.1 Loan Principal & Repayment Schedule; remaining sections pending.
+**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; remaining sections pending.
 
 Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifies an invariant or calculation. Confirmed business decisions remain binding. New financial candidates are proposed until explicitly approved. No actual money, underwriting, bank integration or blockchain. Examples are illustrative, not financial advice or legal conclusions.
 
@@ -131,9 +131,74 @@ Previous pro-rata examples/FT-006 remain alternative comparison vectors, not the
 
 All FD-001–005 remain unconfirmed; research does not change BRD v1.0 or BD-020. FD-003 recommendation revised, FD-004 refined, other recommendations retained. 
 
-## 3.2–3.8 Pending
+## 3.2 Interest Calculation — research-first candidate
 
-- 3.2 Interest Calculation
+### 3.2.1 Verified reference mechanisms
+
+Reviewed 2026-11-27; distinguish specific products, not universal conventions.
+
+| Source | Verified mechanism | CreditForge adaptation |
+|---|---|---|
+| [Mintos loan interest](https://help.mintos.com/hc/en-us/articles/25040259965457-How-is-interest-for-investments-in-loans-calculated) (full page) | Daily simple accrual using actual days and denominator 360; subsequent interest uses remaining investment after principal repayment. | Adopt reducing principal and simple daily accrual; adapt denominator to 365 for simulated Vietnamese bank context. |
+| [Vietnamese Deposit Insurance explanation of Circular 14](https://www.div.gov.vn/thong-nhat-cach-tinh-lai-huy-dong-va-cho-vay-tao-su-cong-bang-trung-thuc-hon-), [government summary](https://binhphuoc.gov.vn/vi/laws/detail/VE-QUY-DINH-PHUONG-PHAP-TINH-LAI-TRONG-HOAT-DONG-NHAN-TIEN-GUI-CAP-TIN-DUNG-GIUA-TO-CHUC-TIN-DUNG-VOI-KHACH-HANG-DO-NHA-NUOC-VIET-NAM-BAN-HANH-106/) (indexed text) | Annual rate on 365-day basis, actual balance and days. | Candidate ACT/365 Fixed for borrower and token coupons; only accept compatible mock contract terms. Not a legal compliance conclusion or claim the circular governs token rights. |
+| [Goldfinch V1 Borrowers](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/borrowers) (indexed text) | Due Senior obligations precede due Junior obligations. | Reference for F01 Senior-first candidate and 3.5; does not prove identical ordering for every early principal receipt. |
+| [Goldfinch Callable Deals](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/guides/participating-in-callable-deals) (full page) | Separate callable product uses pro-rata waterfall and defers interest-base reduction for early principal repayment until scheduled principal due date. | Do not import callable loan product mechanics or lender recall; use ordinary reducing balance candidate instead. |
+| [Maple borrower introduction](https://docs.maple.finance/maple-for-borrowers) (indexed text) | Recurring interest, principal at term end. | F01 schedule reference. |
+| [Mintos secondary interest](https://help.mintos.com/hc/en-us/articles/360001361917-How-is-interest-divided-between-the-seller-and-buyer-of-an-investment-on-the-Secondary-Market) (full search extract) | Buyer accrues from purchase; seller stops at sale, with unpaid interest during listing-to-sale period paid when underlying repayment arrives. | Support BD-003; complete claim rights including pre-listing arrears in 3.4, do not assume source covers all cases. |
+
+F01 remains unconfirmed. Research-first policy: use coherent reference mechanisms where compatible, document adaptations; do not equate Goldfinch callable product with two-tranche Borrower Pools.
+
+### 3.2.2 Candidate interest basis
+
+FD-006 proposed: fixed annual borrower rate and fixed annual Senior coupon; simple ACT/365 Fixed, no compounding of unpaid interest, no additional penalty/default coupon in MVP candidate. No claim of altering external loan contract; admission requires compatible terms, any incompatible receipt/charges classified separately and reviewed, not discarded. Distinguish contractual Borrower principal and issued rights after impairment or loss.
+
+For constant balance B, annual decimal rate r and elapsed actual calendar days d: I=B*r*d/365. For changing balances, sum over nonoverlapping intervals. Denominator stays 365 in leap years. Monthly due schedule determines payment dates, not an assumption of 30 days per month. Rates on 360 and 365 basis are not interchangeable at the same nominal APR. Junior earns eligible residual cash under later waterfall rather than independently guaranteed coupon.
+
+Borrower accrual uses contractual outstanding principal and borrower rate. Senior accrual uses remaining Senior rights and Senior coupon; holder accrual uses that holder's share of remaining Senior rights. Purchase price is not the interest base. Principal repayment is not interest. Actual receipt, accrual, approved distribution and confirmed payout remain distinct. No negative interest base. Stop ordinary accrual on repaid principal; default/maturity and unpaid interest after those events require 3.6 rules. Do not recognize forecast interest as received income.
+
+### 3.2.3 Time boundary and effective facts
+
+FD-007 proposed: use Vietnam business calendar dates (Asia/Ho_Chi_Minh), actual elapsed days, consistent half-open intervals for accrual; for principal, effective applied receipt date is boundary subject to approved simulated contract day-count convention. Use a consistent allocation cutoff between old and new holders, never credit a buyer for time before completed settlement (BD-003). Exact intraday settlement/date allocation, same-day multiple transfers, pre-issuance accrued claims, receipt backdating, business-day due date adjustment and historical unpaid interest must be resolved in 3.4 and 3.5. Do not silently round settlement back to start of day. If daily cutoff cannot faithfully represent ownership, use finer time segments or explicit eligible settlement policy; review before implementation. Late-approved effective facts trigger reconciliation, not retroactive destructive edits.
+
+### 3.2.4 Worked examples (unrounded until presentation)
+
+Example 1: 100m VND at 8% annual for 30 days: ACT/365 = 657534.246575... VND; ACT/360 = 666666.666667... VND. Difference arises solely from denominator at same annual rate.
+
+Example 2: 6bn borrower balance at 12%, 30 days unchanged: 59,178,082.19178... VND. Senior 4.8bn at 8%: 31,561,643.83562... VND. If actual receipt equals fully paid borrower interest and eligible obligations as assumed, residual 27,616,438.35616... VND before costs; not guaranteed net Bank profit. This example does not approve waterfall priority.
+
+Example 3: Senior First candidate, Senior 4.8bn, Junior 1.2bn, 2bn normal principal paid after 15 elapsed days in a 30-day period. Borrower base 6bn then 4bn: interest = (6bn*15+4bn*15)*0.12/365 = 49,315,068.49315... VND. Senior base 4.8bn then 2.8bn: interest = (4.8bn*15+2.8bn*15)*0.08/365 = 24,986,301.36986... VND. Assumes principal reduction effective at interval boundary, no default, full-basis issue, F01 proposed choices. Pro-rata alternative gives different Senior base, not different Borrower base.
+
+Example 4: one Senior token with remaining principal 60k, purchased at 55k, coupon 8%, 30 elapsed days: accrued 394.5205479... VND; neither 100k original face nor 55k acquisition price is accrual base. Paid amount depends on actual receipts.
+
+### 3.2.5 Proposed financial rules and test vectors
+
+| Rule | Candidate |
+|---|---|
+| FR-012 | Simple actual-days /365 interest, fixed annual rate, no compounding; FD-006 pending |
+| FR-013 | Split principal/accrual intervals at approved effective changes; no gaps or double counting |
+| FR-014 | Senior interest on remaining principal rights, not purchase price or original face after repayment |
+| FR-015 | Junior residual depends on available cash and approved waterfall, not separate guaranteed coupon |
+| FR-016 | Expected/accrued/allocated/paid amounts distinct; no actual payout based solely on schedule |
+| FR-017 | Calendar and effective-time convention explicit; no buyer accrual before settlement; FD-007 detailed cutoff pending |
+
+| Test | Input | Expected (pre-rounding) |
+|---|---|---|
+| FT-013 | 100m, 8%, 30 days | 657534.246575... |
+| FT-014 | 6bn borrower, 12%, 15 days before and after 2bn principal reduction | 49315068.49315... |
+| FT-015 | Senior 4.8bn then 2.8bn, 8%, 15 days each | 24986301.36986... (F01 Senior-first candidate) |
+| FT-016 | Current principal 60k, acquisition price 55k, 8%, 30 days | 394.5205479... |
+| FT-017 | Zero days or zero remaining principal | zero ordinary accrual for that interval |
+| FT-018 | 366 actual days, unchanged balance | use 366/365, not silently denominator 366 |
+| FT-019 | Receipt not approved or payout fails | no fabricated cash; distinguish entitlement and confirmed payout |
+
+All tests are specifications, not executed software tests. Exact monetary precision in 3.8.
+
+### 3.2.6 Consolidated review approach
+
+No additional gate solely for this section. F01 (FD-001–005) remains pending; FD-006 (simple ACT/365 Fixed, fixed rates, no compounding) and FD-007 (calendar/effective time boundaries, detailed ownership cutoff deferred) are draft recommendations. Present one consolidated review after 3.3 or earlier if owner requests. No confirmed FD or BRD decision altered. FD-006 penalty exclusion is only a candidate; default contractual charges treatment must be explicit in 3.6.
+
+## 3.3–3.8 Pending
+
 - 3.3 Tranche & Tokenization Economics
 - 3.4 Ownership & Accrued Interest
 - 3.5 Repayment Waterfall
@@ -147,3 +212,4 @@ All FD-001–005 remain unconfirmed; research does not change BRD v1.0 or BD-020
 |---|---|
 | 0.1 | Start Phase 3 from approved BRD v1.0; draft 3.1 and Financial Review Gate F01 |
 | 0.2 | Verify external reference mechanisms; revise FD-003 recommendation to Senior First; refine FD-004 with per-tranche Principal Factor; F01 still pending |
+| 0.3 | Research Mintos daily accrual, Vietnamese 365-day convention and Goldfinch product differences; draft 3.2 and FD-006/007; F01 still pending |
