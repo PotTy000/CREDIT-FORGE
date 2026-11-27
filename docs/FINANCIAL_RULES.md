@@ -1,9 +1,9 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.5 — FD-001–011 confirmed; ownership and accrued interest draft  
+**Version:** 0.6 — Repayment waterfall draft; FD-012–017 consolidated review  
 **Phase:** 3 — Financial Rules Specification  
 **Approved business baseline:** [BRD v1.0](./BRD.md), commit 0f7dd05dd65e21e53407ee611b3aaab0f37a4094  
-**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; remaining sections pending.
+**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; 3.5 Repayment Waterfall; remaining sections pending.
 
 Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifies an invariant or calculation. Confirmed business decisions remain binding. New financial candidates are proposed until explicitly approved. No actual money, underwriting, bank integration or blockchain. Examples are illustrative, not financial advice or legal conclusions.
 
@@ -332,8 +332,78 @@ Tests specified, not executed. Monetary rounding deferred 3.8.
 
 FD-012 (seller retains earned unpaid ordinary interest, including arrears; no compulsory accrued surcharge) and FD-013 (intraday ownership allocation within actual calendar-day ACT/365) are proposed extensions. Owner confirmed FD-001–011 only. Bundle FD-012/013 with upcoming waterfall decisions rather than interrupting for another isolated gate. Partial interest receipt priority, principal effective cutoff and default interest remain open. BRD v1.0 and BD-020 ALLOW unchanged.
 
-## 3.5–3.8 Pending
-- 3.5 Repayment Waterfall
+## 3.5 Repayment Waterfall — research-first draft
+
+### 3.5.1 Source evidence and scope
+
+Reviewed official indexed documentation 2026-11-27: [Goldfinch V1 Borrowers](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/borrowers) and [Overview](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/goldfinch-overview) describe application of borrower payments to due Senior interest and principal ahead of Junior obligations; amounts exceeding borrower interest owed reduce principal. [Borrower Pool participation](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/guides/participating-in-borrower-pools) describes first-loss and repayment-linked yield. [Liquidity Providers](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/liquidityproviders) describes different fee and interest redistribution economics; not imported. [Mintos secondary interest](https://help.mintos.com/hc/en-us/articles/360001361917-How-is-interest-divided-between-the-seller-and-buyer-of-an-investment-on-the-Secondary-Market) confirms ownership-period accrual and deferred seller interest for the described listing-to-sale period. It does not establish priority of historical arrears across holders or intraday cutoffs. Evidence is official indexed text, not contract audit. CreditForge combines these reference principles with confirmed FD-001–011 and proposed FD-012/013; exact component separation and pro-rata arrears rules below are local adaptations. No Bank-funded interest advance or guarantee; BRD limited recourse and BD-020 unchanged.
+
+### 3.5.2 Receipt validation and component separation (FD-014 proposed)
+
+External borrower repayment is not a CreditForge payment order. Officer records actual receipt reference, amount, applied effective timestamp, principal component C_P, ordinary interest component C_I, and any separately classified noneligible/pre-issuance interest, fee, penalty, or excess. Distinct Approver confirms evidence, unique reference, nonnegative components, sum equal to actual receipt, and compatible external contractual application. Expected schedule is not cash. Do not infer components from payment amount alone, divert principal to interest, or include pre-issuance income in issued rights. If ambiguous, reconcile before allocation. Noneligible amounts are separately accounted for; no silent disappearance, payout or capitalization. Normal waterfall applies only approved eligible components; distressed/default recovery uses 3.6. If simultaneous principal and interest, compute accrued rights through effective cutoff on pre-event balances, then apply components and reduce principal prospectively. Borrower contract accrual cutoff and precise simultaneous-event sequencing must match approved rules; ambiguous/backdated facts route to reconciliation.
+
+### 3.5.3 Ordinary interest waterfall (FD-015 proposed)
+
+Let D_i be eligible due unpaid Senior ordinary-interest claim of holder i, including former holders under proposed FD-012 and Bank-held Senior, net of prior allocations even if payouts pending. D=sum D_i. Let C be approved eligible ordinary interest cash C_I. A_S=min(C,D). If D>0, A_i=A_S*D_i/D; if D=0, all A_i=0. Junior residual A_J=C-A_S only after all eligible due Senior interest is satisfied and cash is attributable to distributable ordinary interest. Hold/reconcile prepayments of future interest, ambiguous surplus or noneligible amounts separately; do not award to Junior automatically. Claims not yet due are not automatically accelerated except under approved early closure rules; receipt coverage periods must be validated. All due Senior claims from different periods/owners share same priority, proportional to unpaid due claim, not FIFO by investor or period (candidate, not source-proven). Partial receipts leave D_i-A_i outstanding; no compounding. Cash cap and claim cap enforced, deterministic rounding in 3.8. Bank receives allocation in accounting, no transfer to itself. External payouts only.
+
+Example: illustrative borrower due interest 1m, Senior due 800k, Junior potential residual 200k. A/B/C Senior claims 400k/240k/160k. If receipt 500k: A250k, B150k,C100k, Junior0, due Senior arrears300k. At 900k receipt: Senior800k, Junior100k. At 1m receipt: Senior800k, Junior200k. At zero receipt: no allocation, Senior due unpaid800k. These examples assume eligible due cash and no other obligations. If 60% Senior held by external investors and 40% Bank for same interval: 480k and 320k claims, 500k cash -> external300k, Bank retained Senior200k, Junior0; external payout300k only. If ownership changed, use claim amounts, not current unit proportions.
+
+Arrears example: A sold all units after earning unpaid 300k in month 1; B earned 800k due month 2. With approved eligible interest receipt 550k, both due claims share 50% satisfaction: A150k, B400k, Junior0; remaining claims A150k/B400k. If 1.5m received covering borrower arrears and new interest, A300k/B800k, Junior400k (assuming no other claims or exclusions). No purchaser receives seller's old interest under FD-012.
+
+### 3.5.4 Ordinary principal waterfall (confirmed FD-003/004, proposed cutoff FD-016)
+
+For applied eligible principal cash x between zero and remaining issued principal S+J, Senior principal allocation X_S=min(x,S), Junior X_J=x-X_S. Within Senior distribute X_S in proportion to remaining principal rights held at effective repayment cutoff, including Bank; if S=0, no Senior allocation. Junior is entirely Bank-held. Do not use historic interest claim proportions to allocate principal. Former holders do not receive future principal after settlement. Decrease balances S'=S-X_S,J'=J-X_J, recompute per-tranche principal factors without reducing unit count on partial repayment. Payout pending does not restore principal. Example 6bn (S4.8bn,J1.2bn), 2bn principal received, 60% Senior externally held: external principal1.2bn, Bank Senior0.8bn, Junior0; S'=2.8bn,J'=1.2bn. External payout1.2bn; Bank allocation0.8bn. Original units unchanged until retirement policy. If x exceeds remaining rights, classify excess separately, do not overpay. At full repayment, stop new trading and preserve all unpaid accrued claims/payouts; full principal repayment is not proof all obligations settled.
+
+FD-016 proposed effective cutoff control: use actual applied repayment timestamp and recorded ownership history, not approval or payout timestamp. Known material repayment pending verification restrict affected new orders until confirmed balances/disclosure reconcile (not a blanket overdue freeze); if late facts precede completed settlement, preserve history and route correction to authorized reconciliation. At coincident timestamps, deterministic business sequence based on verified event order; if order cannot be established, hold for review. No unilateral reversal of a completed trade. Revalidate affected pending orders, original price snapshot retained; paid orders reconciled. After principal changes, open Primary new orders price at current principal per unit under FD-011, subject to precision/revalidation; closed offering not reopened. Zero-principal Senior no new purchases even if Junior remains. Secondary unreserved listings require refreshed principal disclosure and seller confirmation of price or cancellation; no automatic price change. Exact technical locks, late-event correction, payout rounding remain to specify.
+
+### 3.5.5 Cash and payout invariants (FD-017 proposed detail)
+
+One approved receipt has one logical allocation posting; retries idempotent. Sum allocations plus explicitly classified non-distributable/unallocated cash equals receipt; no negative claim or principal balance. Persist allocation lines identifying holder, component, effective entitlement, receipt and amount. Decrease unpaid due interest by allocated amount, not actual payout success, to avoid funding the same claim twice. Allocated external amounts become outstanding payables until verified payout; failed attempts retain obligation (BD-031), no reallocation. Bank-retained amounts are accounting allocations only. Separate receipt, entitlement, allocation, payout and confirmation; no wallet. Corrections to approved facts require authorized traceable adjustment (BR-070 details pending). Payout aggregation may combine same-recipient eligible lines while retaining traceability; exact batching and authorization details in requirements. No guaranteed liquidity or Bank top-up.
+
+### 3.5.6 Rules and acceptance vectors
+
+| ID | Rule |
+|---|---|
+| FR-032 | Validate actual receipt and approved component classification before allocation (FD-014) |
+| FR-033 | Allocate eligible interest to due Senior claims first; Junior eligible residual only (FD-015) |
+| FR-034 | Pro rata across all same-priority due unpaid Senior claims, including Bank and former holders; not current token count (FD-015, FD-012 dependency) |
+| FR-035 | Normal principal Senior-first, pro rata within remaining rights; separate interest claim base (FD-003 confirmed) |
+| FR-036 | Apply principal factor changes at verified effective cutoff; protect in-flight orders, revalidate disclosure (FD-016) |
+| FR-037 | Allocation reduces unpaid claim/principal once; payout pending distinct, no duplicated payout (FD-017, BR-025/040–042) |
+| FR-038 | Reconcile receipt allocations and separately classified amounts; no excess or negative balances |
+| FR-039 | No Bank self-transfer, only actual external payables executed; no Bank interest advance |
+
+| Test | Input | Expected |
+|---|---|---|
+| FT-037 | Senior due800k, interest cash900k | Senior800k, Junior100k |
+| FT-038 | Senior claims400k/240k/160k, cash500k | 250k/150k/100k; Junior0; arrears300k |
+| FT-039 | Bank holds40% Senior, unchanged ownership; due800k,cash500k | Bank200k, external300k, Junior0 |
+| FT-040 | Former A due300k,current B due800k,cash550k | A150k,B400k, Junior0 |
+| FT-041 | Same claims,cash1.5m eligible | A300k,B800k, Junior400k |
+| FT-042 | S4.8bn,J1.2bn,2bn principal, external60% Senior | external1.2bn,Bank0.8bn; S2.8bn,J1.2bn |
+| FT-043 | Duplicate receipt or payout failure | no duplicate allocation; outstanding payable retained |
+| FT-044 | Interest/principal components inconsistent with receipt | reject/reconcile; no allocation |
+| FT-045 | Principal received after earlier completed transfer but effective before it | reconcile; no silent reassignment or reversal |
+| FT-046 | Senior fully repaid, Junior outstanding | no new Senior orders; retain existing obligations |
+| FT-047 | Zero due Senior claims; eligible ordinary residual cash | Junior only, no division by zero; exclude advance/ambiguous cash |
+| FT-048 | Mixed approved principal and interest | independent component conservation, accrue through cutoff before principal update |
+
+Vectors are specifications, not executed software tests. Exact rounding and allocation residuals in 3.8.
+
+### 3.5.7 Consolidated review FD-012–017
+
+| FD | Proposed policy |
+|---|---|
+| FD-012 | Seller retains all earned unpaid ordinary interest, including arrears; no mandatory accrued surcharge |
+| FD-013 | Actual settlement timestamp; fractional actual calendar-day accrual, no double accrual |
+| FD-014 | Use verified external receipt components; separate normal interest/principal; no silent reclassification |
+| FD-015 | Due Senior interest first; pro rata across all same-priority unpaid due claims including prior owners and Bank, Junior eligible residual |
+| FD-016 | Effective repayment cutoff determines principal entitlement; reconcile late facts, revalidate orders and price/disclosure after material principal changes |
+| FD-017 | Post allocation once, retain separate payables and retry failures; no Bank self-transfer or advance |
+
+All six await explicit confirmation. User's conversational understanding of pro-rata and Bank retained Senior is not approval of the entire group. FD-001–011 remain confirmed. No BRD changes. Default and recovery, impairment, unpaid claim write-off, post-loss recoveries, exact precision and technical requirements remain open.
+
+## 3.6–3.8 Pending
 - 3.6 Default, Recovery & Loss Waterfall
 - 3.7 Investment Performance
 - 3.8 Financial Precision & Validation
@@ -347,3 +417,4 @@ FD-012 (seller retains earned unpaid ordinary interest, including arrears; no co
 | 0.3 | Research Mintos daily accrual, Vietnamese 365-day convention and Goldfinch product differences; draft 3.2 and FD-006/007; F01 still pending |
 | 0.4 | Research tranche constraints, leverage, fixed coupon and denomination; draft 3.3, FD-008–011, FR-018–024 and FT-020–027; consolidated review pending |
 | 0.5 | Confirm FD-001–011 without exceptions; research Mintos loan vs bond accrual; draft 3.4, FD-012/013, FR-025–031, FT-028–036 |
+| 0.6 | Research Goldfinch V1 repayment priority and Mintos interest ownership; draft 3.5, FD-014–017, FR-032–039, FT-037–048; consolidate FD-012–017 review |
