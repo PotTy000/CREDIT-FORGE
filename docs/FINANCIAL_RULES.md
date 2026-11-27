@@ -107,7 +107,7 @@ During a material principal change, pending orders need revalidation of disclose
 | FD-004 | Partial prepayment token handling | Maintain unit quantity; reduce remaining principal per unit; disclose before trading |
 | FD-005 | Issuance principal basis | Full eligible outstanding principal, Bank retains unsold Senior and all Junior; do not confuse sold amount and issuance basis |
 
-FD-001–005 confirmed by owner in consolidated review; Senior First is selected, Pro Rata across tranches is historical comparison only. Full eligible outstanding principal is confirmed. Early prepayment fee, interest cutoff, recovery ordering, precision, token retirement and exception handling remain unresolved. No real banking policy inferred.
+FD-001–005 confirmed by owner in consolidated review; Senior First is selected, Pro Rata across tranches is historical comparison only. Full eligible outstanding principal is confirmed. Subsequent confirmed sections 3.4–3.8 resolve the financial principles; external fee classification, technical retirement, terminal rounding and exception implementation remain handoff items. No real banking policy inferred.
 
 ### 3.1.9 External reference research — FD-001–005 (2026-11-27)
 
@@ -330,7 +330,7 @@ Tests specified, not executed. Monetary rounding deferred 3.8.
 
 ### 3.4.7 Review approach
 
-FD-012 and FD-013 confirmed by owner without exceptions in consolidated review together with FD-014–017 and FD-019–023. Partial interest receipt priority, principal effective cutoff and default interest remain open. BRD v1.0 and BD-020 ALLOW unchanged.
+FD-012 and FD-013 confirmed by owner without exceptions in consolidated review together with FD-014–017 and FD-019–023. Partial interest priority and principal cutoff confirmed in 3.5; default interest cutoff confirmed in 3.6. BRD v1.1 and BD-020 ALLOW unchanged.
 
 ## 3.5 Repayment Waterfall — confirmed policy
 
@@ -401,7 +401,7 @@ Vectors are specifications, not executed software tests. Exact rounding and allo
 | FD-016 | Effective repayment cutoff determines principal entitlement; reconcile late facts, revalidate orders and price/disclosure after material principal changes |
 | FD-017 | Post allocation once, retain separate payables and retry failures; no Bank self-transfer or advance |
 
-Owner explicitly confirmed all six without exceptions. FD-001–011 remain confirmed. BRD v1.1 revises only repayment integration. Default and recovery, impairment, unpaid claim write-off, post-loss recoveries, exact precision and technical requirements remain open.
+Owner explicitly confirmed all six without exceptions. FD-001–011 remain confirmed. BRD v1.1 revises only repayment integration. Default/recovery, write-off, late recovery and precision principles confirmed in 3.6/3.8; technical requirements remain open.
 
 ### 3.5.8 Integration revision
 
@@ -424,7 +424,7 @@ FR-040: Mock Core Banking applies confirmed FD-018 interest-first then permitted
 | FT-058 | Repeat same posted transaction | no second borrower balance reduction or CreditForge allocation |
 | FT-059 | Mid-period full prepayment with accrued not-yet-due interest or unclassified charges | verify contractual settlement components before closure; no automatic omission |
 
-Tests are specification vectors, not executed. FD-018 confirmed independently; FD-012–017 subsequently confirmed in consolidated review. BRD v1.1 integration and confirmed FD-001–011 unchanged. Exact borrower-side due-date/accrued-interest closure details and excess resolution remain pending.
+Tests are specification vectors, not executed. FD-018 confirmed independently; FD-012–017 subsequently confirmed in consolidated review. BRD v1.1 integration and confirmed FD-001–011 unchanged. Full closure earned-interest rule in 3.8; contractual due-date adjustment and excess resolution workflow remain Phase 4/7 items.
 
 ## 3.6 Default, Recovery & Loss Waterfall — confirmed policy
 
@@ -563,7 +563,7 @@ Tests not executed; solver precision and rounding in 3.8.
 
 ### 3.7.6 Confirmed financial decisions
 
-| FD | Proposed policy |
+| FD | Confirmed policy |
 |---|---|
 | FD-024 | Confirmed cashflow classification; distinguish principal, interest, purchase/sale, payout and unresolved trade cash |
 | FD-025 | Nominal-basis P&L and cumulative-cost Simple ROI; realized only when financially resolved; no market price valuation or double loss |
