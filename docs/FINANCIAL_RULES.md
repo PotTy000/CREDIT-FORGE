@@ -1,6 +1,6 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.7 — Automated repayment integration; FD-012–017 review pending  
+**Version:** 0.8 — Confirm mock repayment allocation order; FD-012–017 review pending  
 **Phase:** 3 — Financial Rules Specification  
 **Approved business baseline:** [BRD v1.1](./BRD.md); approved Phase 2 baseline plus BD-013-R1/019-R1 revision  
 **Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; 3.5 Repayment Waterfall; remaining sections pending.
@@ -407,6 +407,25 @@ All six await explicit confirmation. User's conversational understanding of pro-
 
 Owner confirmed automated repayment ingestion (BD-013-R1/019-R1). FD-014's data source and validation path are updated accordingly, but the broader FD-012–017 consolidated financial gate remains pending. Normal receipt requires no human reentry or manual approval; exception/recovery handling remains dual approval. The term "approved receipt" in earlier rules means accepted via authoritative automated verification for routine repayment, or explicitly approved after evidence review for exceptional/recovery facts. Posted transaction identity (issuer + source transaction ID) is the economic deduplication key independent of event delivery ID; reconcile missed events and out-of-order or corrected facts against source records. A successful webhook alone is not financial finality. Do not rerun allocations after payout failures. FR-032–039 and FT-037–048 apply unchanged to accepted amounts. Additional candidate vectors FT-049 valid posted event auto-allocates once; FT-050 duplicate delivery or new event for same transaction no second allocation; FT-051 invalid source/unknown loan/component mismatch held; FT-052 missed event recovered by source lookup; FT-053 reversal or backdated conflicting fact reviewed before adjustment. Tests not executed. No new financial formulas or status policy approved by this change. Default/recovery evidence remains manually reviewed.
 
+### 3.5.9 Mock Core Banking repayment allocation — FD-018 confirmed
+
+Owner explicitly approved Interest First, Principal Second for the simulated borrower-side loan servicing model. Reference direction: [Mambu Repayment Allocation Order](https://docs.mambu.com/docs/repayment-allocation-order/) (reference identified in prior discussion; not independently reverified in this revision). This is a simplified product configuration, not a universal banking rule. Only compatible loans are simulated; no new origination, real banking integration or borrower portal. This is distinct from CreditForge's Senior/Junior waterfall.
+
+For a confirmed simulated receipt R >= 0, eligible unpaid ordinary interest due D >= 0 (including arrears), and outstanding contractual principal P >= 0, at a normal eligible repayment cutoff: I = min(R,D); G = min(R-I,P) if principal payment is contractually due or permitted as prepayment; otherwise G=0 for a not-yet-due principal obligation. E=R-I-G is separately classified unapplied excess, not distributable income. Reduce due interest by I and principal by G once; publish authoritative posted transaction with total amount, interest amount, principal amount, unapplied excess, resulting balances, transaction identity and effective timestamp. Validate component conservation R=I+G+E. A zero/negative payment must not create a distribution. Do not automatically treat accrued but not-yet-due interest as due; prepayment/full closure settlement of accrued interest, fee/penalty or incompatible terms require explicit contractual classification and exception review; do not silently forgive or distribute those amounts. For this simplified normal path assume no other charges and compatible permission for full/partial principal prepayment per FD-002. Recovery/default allocation remains separate in 3.6. CreditForge verifies posted components and never reclassifies borrower payments to manufacture cash. Any excess remains separate for reconciliation; refund authority and processing details deferred.
+
+FR-040: Mock Core Banking applies confirmed FD-018 interest-first then permitted principal, caps both at outstanding obligations and preserves excess separately. FR-041: CreditForge consumes authoritative classified components and applies independent tranche allocation; no duplicate loan reduction or distribution.
+
+| Test | Input | Expected |
+|---|---|---|
+| FT-054 | D=800k, P=100m, R=500k | interest500k, principal0, due interest300k |
+| FT-055 | Same initial state, R=1m | interest800k, principal200k, P'=99.8m |
+| FT-056 | Same initial state, R=102m | interest800k, principal100m, excess1.2m separately held; closure subject to other obligations |
+| FT-057 | D=800k, P=100m, R=1m, principal not due and prepayment disallowed | interest800k, principal0, excess200k reconciliation; incompatible normal product terms flagged |
+| FT-058 | Repeat same posted transaction | no second borrower balance reduction or CreditForge allocation |
+| FT-059 | Mid-period full prepayment with accrued not-yet-due interest or unclassified charges | verify contractual settlement components before closure; no automatic omission |
+
+Tests are specification vectors, not executed. FD-018 confirmed independently; FD-012–017 still pending explicit consolidated review. BRD v1.1 integration and confirmed FD-001–011 unchanged. Exact borrower-side due-date/accrued-interest closure details and excess resolution remain pending.
+
 ## 3.6–3.8 Pending
 - 3.6 Default, Recovery & Loss Waterfall
 - 3.7 Investment Performance
@@ -423,3 +442,4 @@ Owner confirmed automated repayment ingestion (BD-013-R1/019-R1). FD-014's data 
 | 0.5 | Confirm FD-001–011 without exceptions; research Mintos loan vs bond accrual; draft 3.4, FD-012/013, FR-025–031, FT-028–036 |
 | 0.6 | Research Goldfinch V1 repayment priority and Mintos interest ownership; draft 3.5, FD-014–017, FR-032–039, FT-037–048; consolidate FD-012–017 review |
 | 0.7 | Apply BD-013-R1/019-R1 integration revision; update FD-014 source path and add FT-049–053; consolidated FD-012–017 remains pending |
+| 0.8 | Confirm FD-018 borrower-side interest-first principal-second allocation; add FR-040–041 and FT-054–059; FD-012–017 pending |
