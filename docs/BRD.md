@@ -1,6 +1,6 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 1.0 — Phase 2 approved baseline  
+**Version:** 1.1 — approved baseline; revised repayment integration  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
 **Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases; 2.6 Business Rules Analysis; 2.7 Financial Model Research; 2.8 BRD Consolidation & Review.
@@ -70,7 +70,7 @@ These are product verification criteria, not validated market KPIs. No commercia
 
 ### 2.1.4 Constraints and assumptions
 
-Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, manual repayment recording, combined Marketplace Operator. Confirmed at Gate 03: one issuance and offering per loan, one collateral per loan, eligibility based on outstanding principal including partially repaid loans, partial listing fill. Confirmed at Gate 04: dual approval of repayment/recovery receipts, allow trading on verified overdue with risk disclosure; stop new trading on default or maturity, honor eligible existing orders at offering closure, cancellation of unreserved listing remainder. Confirmed at Gate 05: prohibit self-purchase; cancel/relist to change price; snapshot verified receiving accounts for existing instructions; dual approval of loan status; explicit overdue-risk acknowledgement. Confirmed at Gate 06: reapprove material changes, revalidate changing credit risk, 10-minute checkout, retry failed payout to newly verified destination after definitive nonpayment. Exact financial conventions, payment finality and detailed eligibility remain open. Time, team and grading rubric not confirmed.
+Confirmed: one issuer, independent operator, loan-centric, post-funding, limited-recourse, Senior/Junior, direct bank settlement, automatic bank payout, no borrower portal, no cash wallet, simulation only, TypeScript stack. Confirmed at Gate 02-R1: exclusive collateral, dual offering approval, original manual repayment recording (superseded by BD-013-R1), combined Marketplace Operator. Confirmed at Gate 03: one issuance and offering per loan, one collateral per loan, eligibility based on outstanding principal including partially repaid loans, partial listing fill. Confirmed at Gate 04: original dual approval of all repayment/recovery receipts (superseded for routine repayment by BD-019-R1), allow trading on verified overdue with risk disclosure; stop new trading on default or maturity, honor eligible existing orders at offering closure, cancellation of unreserved listing remainder. Confirmed at Gate 05: prohibit self-purchase; cancel/relist to change price; snapshot verified receiving accounts for existing instructions; dual approval of loan status; explicit overdue-risk acknowledgement. Confirmed at Gate 06: reapprove material changes, revalidate changing credit risk, 10-minute checkout, retry failed payout to newly verified destination after definitive nonpayment. Revised during Phase 3: BD-013-R1/019-R1 automate verified routine repayment ingestion and reserve maker-checker for exceptions, corrections and recovery. Exact remaining financial conventions, payment finality and detailed eligibility remain open. Time, team and grading rubric not confirmed.
 
 ## 2.2 Stakeholder Analysis
 
@@ -92,14 +92,14 @@ Influence ratings are analyst assessments, not stakeholder interview results.
 | ID | Role | Organization | Responsibilities |
 |---|---|---|---|
 | ACT-001 | Investor | Investor | Browse, buy, list/cancel own holdings, manage verified receiving account, monitor portfolio |
-| ACT-002 | Issuer Officer | Issuing Bank | Register existing loan, evidence, propose tranche/terms, submit offering, record repayment/recovery facts |
+| ACT-002 | Issuer Officer | Issuing Bank | Register existing loan, evidence, propose tranche/terms, submit offering, review repayment exceptions and record recovery facts |
 | ACT-003 | Issuer Approver | Issuing Bank | Approve issuer submissions and sensitive financial facts; return/reject with reason |
 | ACT-004 | Marketplace Reviewer | CreditForge | Independent publication eligibility review; approve/reject/suspend offering within policy |
 | ACT-005 | Settlement Operator | CreditForge | Monitor payment/settlement/payout exceptions, reconcile, initiate permitted retry or refund request |
 | ACT-006 | System Admin | CreditForge | Account, role, access and permitted configuration; no default financial authority |
 | ACT-007 | Auditor (optional) | Authorized organization | Read-only, scoped financial and approval audit |
 
-Payment System is an external system actor (ACT-008), not a human role. Borrower and bank credit-underwriting staff are not required direct actors. Financial Engine is an internal automated component, not an external actor.
+Payment System is an external system actor (ACT-008), not a human role. Mock Core Banking (ACT-009) is the simulated issuer-side authoritative source of posted repayment transactions; it may share infrastructure with the existing payment simulator but has a distinct business responsibility. Borrower and bank credit-underwriting staff are not required direct actors. Financial Engine is an internal automated component, not an external actor.
 
 Confirmed at Gate 02-R1: ACT-004 and ACT-005 are capability groups assigned to one Marketplace Operator role, with distinct action permissions and separation from issuer; ACT-003 remains separate from ACT-002. Auditor remains optional scoped read-only permission. Three portals can share code and layout.
 
@@ -109,7 +109,7 @@ Confirmed at Gate 02-R1: ACT-004 and ACT-005 are capability groups assigned to o
 |---|---|---|
 | Register existing loan and propose terms | Issuer Officer | Issuer Approver; Marketplace eligibility checks |
 | Publish offering | Marketplace Reviewer or automated release after approval | Approved terms; no editing by reviewer |
-| Record repayment/recovery facts | Issuer Officer | Distinct Issuer Approver for repayment/recovery receipts; unique external reference |
+| Import routine repayment / review exceptions and recovery | Mock Core Banking and CreditForge automation; Issuer Officer for exceptions/recovery | Verified authoritative posted transaction for routine repayment; distinct Issuer Approver for exceptions/corrections/recovery; unique external reference |
 | Confirm overdue/cure/default | Issuer Officer submits; distinct Issuer Approver confirms | Evidence and policy; no automatic default or arbitrary Marketplace decision (BD-026) |
 | Create listing/order | Investor (issuer for primary offering) | Ownership, quantity and trading eligibility |
 | Confirm external payment | Payment System | CreditForge verification; no manual paid-status override |
@@ -145,12 +145,12 @@ Investor sees approved asset summary, issuer, borrower business information perm
 |---|---|---|---|
 | BD-006-R1 | Who approves offerings? | Issuer submits approved proposal; independent CreditForge reviewer approves publication | More workflow, but meaningful separation; simpler variant uses one issuer officer and Marketplace reviewer as maker/checker |
 | BD-007-R1 | Can collateral secure multiple active registered loans? | Exclusive within simulated marketplace | Avoid priority and shared recovery complexity; cannot verify external liens |
-| BD-013 | How is external repayment recorded? | Issuer records confirmed receipt; mock external reference and duplicate check; approval for sensitive records | Less integration scope than full mock Core Banking event system; still automatic waterfall/payout |
+| BD-013 | Historical decision (superseded by BD-013-R1) | Manual confirmed receipt entry | Replaced by automatic integration during Phase 3 |
 | BD-014 | How to scope operator roles? | One Marketplace Operator for review and exception monitoring, distinct System Admin, optional read-only auditor | Reduces screens; action permissions and financial controls remain separate |
 
 BD-008 is superseded: agreement acceptance happens outside the platform. All four decisions in this table were confirmed by the project owner on 2026-11-27. The simpler alternatives are not the selected model.
 
-Dual approval applies to the same version of offering terms. Confirmed BD-028: material changes invalidate prior approvals; reviewers return rather than edit submitted terms. Manual repayment recording means issuer records a confirmed external receipt, not a forecast or invented cash; unique reference and verification precede automatic allocation. Combined Marketplace Operator cannot approve issuer proposals on behalf of issuer or override calculated entitlements. Gate 04 confirms distinct Issuer Approver review for repayment/recovery receipts.
+Dual approval applies to the same version of offering terms. Confirmed BD-028: material changes invalidate prior approvals; reviewers return rather than edit submitted terms. BD-013-R1 replaces manual repayment entry with automatic ingestion of authoritative posted Mock Core Banking transactions; unique reference and verification precede allocation. Combined Marketplace Operator cannot approve issuer proposals on behalf of issuer or override calculated entitlements. BD-019-R1 retains distinct Issuer Approver review for repayment exceptions, corrections and recovery; routine verified transactions require no manual approval.
 
 ### 2.2.7 Collateral reuse research and rationale
 
@@ -190,7 +190,7 @@ Example: asset 10bn secures Loan A 4bn and Loan B 2bn. Combined principal-to-val
 | Settlement | Completion of verified purchase and ownership transfer exactly once |
 | Refund | Separate external return of money, not DB rollback |
 | Receiving Account | Verified simulated bank destination; no cash balance in CreditForge |
-| Repayment Receipt | Confirmed external borrower payment manually recorded by issuer |
+| Repayment Receipt | Confirmed external borrower payment imported from Mock Core Banking; exceptional facts reconciled with evidence |
 | Interest Entitlement | Earned financial right for ownership interval; not necessarily paid |
 | Distribution | Allocation of an available receipt to entitled holders |
 | Payout | External bank execution/confirmation of allocated amount |
@@ -317,7 +317,7 @@ BD-017 requires an issuer-confirmed opening snapshot at issuance: original princ
 | BP-003 | Primary purchase | Investor selects quantity | Direct payment to Bank and settled ownership |
 | BP-004 | Secondary listing and purchase | Holder lists or Buyer selects quantity | Partial/full fill, direct payment to Seller, transfer |
 | BP-005 | Payment exception and reconciliation | Timeout, mismatch, duplicate or settlement failure | Resolved or traceable outstanding obligation |
-| BP-006 | Repayment and distribution | Bank records confirmed receipt | Allocated rights and automatic payout instructions |
+| BP-006 | Repayment and distribution | Mock Core Banking posts repayment and notifies CreditForge | Allocated rights and automatic payout instructions |
 | BP-007 | Payout execution | Posted external payable | Confirmed bank payout or outstanding payable |
 | BP-008 | Default and recovery | Verified credit event / recovery receipt | Loss allocation and recovery payout under rules |
 | BP-009 | Closure and collateral release | Contractual obligations resolved | Closed rights, resolved obligations, evidence of release separately recorded |
@@ -396,28 +396,34 @@ flowchart TD
 
 Duplicate callback must not trigger another transfer. Timeout alone is not proof of nonpayment; verify finality before release. A late payment after release cannot displace other completed purchases. Refund is a separate banking operation and not guaranteed if Seller already received money. Marketplace Operator may reconcile and initiate permitted retry/refund; cannot fabricate confirmations, debit accounts or override ownership manually. Ambiguous external status is an exception, not a successful payment. Checkout is 10 minutes per BD-030; reconciliation deadlines, retry counts and refund authorization remain open.
 
-### 2.4.6 BP-006–007 — Manual repayment recording and automatic payout
+### 2.4.6 BP-006–007 — Automated repayment synchronization and automatic payout
 
 ```mermaid
 sequenceDiagram
- participant B as Issuer Officer
- participant A as Issuer Approver
+ participant B as Mock Core Banking
  participant C as CreditForge
+ participant O as Issuer Officer
+ participant A as Issuer Approver
  participant P as Payment System
  participant U as Investor Bank Account
- B->>C: Record confirmed external receipt and reference
- C->>C: Validate amount, components and uniqueness
- A->>C: Confirm receipt
- C->>C: Calculate and post waterfall allocation once
- C->>P: Authorized payout instruction
+ B->>B: Post actual repayment and component breakdown
+ B->>C: Repayment event / transaction reference
+ C->>B: Verify authoritative posted transaction
+ alt Valid new routine receipt
+ C->>C: Accept once, calculate and post waterfall
+ else Exception or conflicting facts
+ C->>O: Open reconciliation case
+ O->>A: Submit verified resolution evidence
+ A->>C: Approve or reject resolution
+ C->>C: Allocate only after valid resolution
+ end
+ C->>P: Authorized payout instruction for accepted allocation
  P->>U: Simulated bank transfer
  P-->>C: Payout confirmation or failure
  C->>C: Reconcile entitlement and actual payout
 ```
 
-Bank manually records actual receipts, not expected amounts. Record loan, external reference, effective date, principal/interest breakdown, evidence. Validation rejects duplicate receipts and pre-issuance receipts as new distributable funds. Once accepted, engine calculates allocation using approved terms and ownership history. Bank retained entitlement need not generate a transfer. Automatic payout uses verified receiving account and authorized issuer instruction; no claim or withdraw. A failed or unknown payout stays outstanding; retry only after status verification and without creating another distribution. No manual editing of calculated entitlements.
-
-Confirmed under BD-019: a distinct Issuer Approver verifies each repayment/recovery receipt before posting; this is separate from dual offering approval. Exact principal/lãi priority, day count, accrued interest, rounding and partial receipts remain Phase 3.
+BD-013-R1/019-R1: routine repayment data originates in a separate logical Mock Core Banking boundary, not from an officer typing it into CreditForge. The simulator posts actual simulated cash and principal/interest application, then notifies CreditForge. CreditForge authenticates the source, verifies posted transaction details against the trusted simulator record, matches the registered loan, validates components, effective time, uniqueness and prior processing, and accepts valid routine receipts automatically. Duplicate deliveries are harmless; delayed, conflicting, missing or reversed facts require reconciliation. A notification alone is not proof of cash. No distribution based on expected schedule. No human approval for normal validated repayment; exceptional financial facts, corrections and recovery require distinct Officer/Approver review with authoritative evidence. No manual fabricated receipt or override. Payout remains automatic, separate and idempotent; Bank retained entitlement needs no transfer. Unknown/failed payouts retain outstanding payable. Exact API, retry, ordering, and correction implementation deferred to detailed requirements/design.
 
 ### 2.4.7 BP-008 — Default and recovery
 
@@ -425,7 +431,7 @@ Confirmed overdue updates risk warnings while eligible primary and secondary tra
 
 Detect missing expected receipt → issuer verifies actual overdue status → grace if applicable → authorized issuer confirms default → stop new trading under BD-020 → issuer performs recovery outside platform → records confirmed net recovery and references → Financial Engine distributes available funds → recognize losses only when appropriate under final loss policy → payout → closure review.
 
-A missed schedule or missing manual record is not by itself proof of default. Interim recovery is not necessarily final loss. No physical liquidation in CreditForge. Existing pending or paid orders must be resolved without silently dropping obligations. No new interest/principal guarantees; Junior first-loss and Senior pari passu under approved financial rules. Default trading policy is confirmed under BD-020; grace, impairment, recovery finality and exact waterfall remain Phase 3.
+A missed schedule or missing synchronized repayment record is not by itself proof of default. Interim recovery is not necessarily final loss. No physical liquidation in CreditForge. Existing pending or paid orders must be resolved without silently dropping obligations. No new interest/principal guarantees; Junior first-loss and Senior pari passu under approved financial rules. Default trading policy is confirmed under BD-020; grace, impairment, recovery finality and exact waterfall remain Phase 3.
 
 ### 2.4.8 BP-009 — Closure and release
 
@@ -435,12 +441,12 @@ Maturity is a date, not proof of payment. Verify outstanding principal and inter
 
 | ID | Decision | Confirmed selection and rationale |
 |---|---|---|
-| BD-019 | Repayment/recovery fact approval | Issuer Officer records, distinct Issuer Approver verifies before distribution; financial facts directly trigger payouts, so maker-checker is valuable |
+| BD-019 | Historical decision (superseded by BD-019-R1) | Manual approval for every repayment/recovery receipt; now limited to exceptions, corrections and recovery |
 | BD-020 | Trading during overdue/default/maturity | Allow primary and secondary trading during confirmed overdue with explicit risk warnings, subject to other eligibility rules; default/maturity stop new trades; existing orders resolved separately |
 | BD-021 | Offering closure with pending orders | Stop new orders immediately; honor pre-existing valid reservations through original payment deadline if loan remains eligible; otherwise reconcile and refund as required; never reopen closed offering |
 | BD-022 | Listing cancellation with pending orders | Allow cancellation of unreserved remainder; existing reservations remain until definitively unpaid, settled or otherwise resolved; no cancellation that strands paid Buyer |
 
-All four decisions confirmed by project owner; BD-020 revised from pause to allow in Gate 04-R1. BD-019, BD-021 and BD-022 unchanged. BD-020 is a project-specific risk and scope policy, not a universal RWA industry standard. Reservation duration is 10 minutes per BD-030; payment finality, late confirmations, dispute resolution, default grace and exact payout/settlement retry rules remain open. No new technical architecture commitment.
+All four decisions confirmed by project owner; BD-020 revised from pause to allow in Gate 04-R1. BD-021 and BD-022 unchanged; BD-019 subsequently revised by BD-019-R1 during Phase 3. BD-020 is a project-specific risk and scope policy, not a universal RWA industry standard. Reservation duration is 10 minutes per BD-030; payment finality, late confirmations, dispute resolution, default grace and exact payout/settlement retry rules remain open. No new technical architecture commitment.
 
 ### 2.4.10 BD-020 reference research
 
@@ -455,7 +461,7 @@ Reviewed 2026-11-27. Distinguish suspension of new subscriptions, secondary tran
 
 Evidence limitation: Mintos overdue-funds article was read in full; some other official pages were available through indexed extracts but direct retrieval failed (cache or Markdown content-type). No contract-level audit or complete product-policy verification was performed.
 
-**Revised decision (Gate 04-R1):** supersede the previous pause-on-overdue choice. Allow new primary and secondary orders during issuer-confirmed overdue, with explicit risk warnings and all other eligibility checks. Stop new trades on default, recovery, maturity or closure. An already closed primary offering never reopens; an independent suspension for another valid reason is not overridden. Continue servicing, distributions, payout and reconciliation. A missing manual receipt alone is not proof of delinquency. This policy preserves a possible exit route, but does not guarantee liquidity and increases adverse-selection and unpaid-interest allocation risks. The reference research above is retained as historical context; it does not establish that this policy is an industry standard.
+**Revised decision (Gate 04-R1):** supersede the previous pause-on-overdue choice. Allow new primary and secondary orders during issuer-confirmed overdue, with explicit risk warnings and all other eligibility checks. Stop new trades on default, recovery, maturity or closure. An already closed primary offering never reopens; an independent suspension for another valid reason is not overridden. Continue servicing, distributions, payout and reconciliation. A missing synchronized repayment record alone is not proof of delinquency. This policy preserves a possible exit route, but does not guarantee liquidity and increases adverse-selection and unpaid-interest allocation risks. The reference research above is retained as historical context; it does not establish that this policy is an industry standard.
 
 Confirmed BD-027: require explicit buyer acknowledgement of overdue risk before payment authorization in either market. Confirmed BD-029 requires revalidation and renewed consent before authorization for material risk changes, and reconciliation after authorization. Proposed presentation details: disclose verified overdue obligations, days overdue and last status update on asset, listing and checkout; bind acknowledgement to the disclosed status version; if material risk changes before settlement, revalidate and route unresolved orders to reconciliation, without automatic transfer or release of paid reservations. Do not assume consent to a changed risk profile. Exact treatment of already authorized/paid orders, information cutoffs and unpaid pre-transfer interest remains open. Distinguish delinquency from default and impairment; no new valuation model or guaranteed recovery is implied.
 
@@ -463,7 +469,7 @@ Confirmed BD-027: require explicit buyer acknowledgement of overdue risk before 
 
 ### 2.5.1 Actor and use-case inventory
 
-Business use cases express actor goals and outcomes, not screens or endpoints. Marketplace Operator combines ACT-004/005; Issuer Officer and Approver remain distinct. External Payment System ACT-008 is a supporting actor. Borrower has no login or direct use case. Automation is an internal responsibility, not a human actor.
+Business use cases express actor goals and outcomes, not screens or endpoints. Marketplace Operator combines ACT-004/005; Issuer Officer and Approver remain distinct. External Payment System ACT-008 and Mock Core Banking ACT-009 are supporting system actors. Borrower has no login or direct use case. Automation is an internal responsibility, not a human actor.
 
 | ID | Use case | Primary actor | Process / objective |
 |---|---|---|---|
@@ -479,8 +485,8 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | UC-010 | Cancel unreserved listing remainder | Investor (Seller) | BP-004 / BO-004,008 |
 | UC-011 | Close primary offering | Authorized issuer / scheduled workflow | BP-003 / BO-001 |
 | UC-012 | Resolve payment/settlement exception | Marketplace Operator | BP-005 / BO-007,008 |
-| UC-013 | Record external repayment receipt | Issuer Officer | BP-006 / BO-006 |
-| UC-014 | Verify repayment/recovery receipt | Issuer Approver | BP-006,008 / BO-006,008 |
+| UC-013 | Synchronize verified external repayment receipt | Mock Core Banking / CreditForge | BP-006 / BO-006 |
+| UC-014 | Reconcile repayment exceptions / approve recovery and corrections | Issuer Officer + distinct Issuer Approver | BP-006,008 / BO-006,008 |
 | UC-015 | Monitor automatic payout and resolve failure | Marketplace Operator | BP-007 / BO-009 |
 | UC-016 | Update verified overdue/cure/default status | Issuer Officer + distinct Issuer Approver | BP-008 / BO-005 |
 | UC-017 | Record external recovery receipt | Issuer Officer | BP-008 / BO-005,006 |
@@ -505,8 +511,8 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 | UC-010 | Seller owns listing | Cancel unreserved remainder; preserve order-specific reservations; create new listing if changing price | No new orders for cancelled remainder; reserved units resolved independently |
 | UC-011 | Authorized issuer or scheduled closure condition | Close offering to new orders; honor existing valid reservations within original deadline if still eligible | Unsold Senior remains Bank; no reopening; unsafe pending cases UC-012 |
 | UC-012 | Payment mismatch, unknown, late, duplicate or settlement failure | Query trusted evidence; reconcile; retry safe settlement or request authorized refund | Completed, refunded or unresolved case; no manual paid override or unauthorized debit; no double-sale |
-| UC-013 | Officer; confirmed external receipt evidence | Enter loan, unique reference, actual date, amount and components; submit | Pending approval; no allocation yet; duplicate/history mismatch rejected |
-| UC-014 | Submitted receipt; distinct Approver | Verify evidence and amounts; approve or return/reject | Approved receipt triggers one distribution run and authorized payout instructions; reject incorrect or duplicate input |
+| UC-013 | Posted repayment at trusted Mock Core Banking | Receive event; verify source transaction, loan, reference, effective date, amount and components; deduplicate | Valid receipt automatically accepted and allocated once; mismatch or ambiguous facts enter UC-014 |
+| UC-014 | Exception, correction or recovery evidence; distinct Approver | Officer reconciles with authoritative source and submits resolution; Approver accepts or rejects | Valid resolution triggers allocation once if applicable; preserve earlier postings and no fabricated receipt |
 | UC-015 | Posted payable or payment exception | Inspect instruction and bank status; reconcile; retry safely if permitted | Confirmed payout or outstanding obligation; no second distribution, no wallet credit |
 | UC-016 | Evidence of actual loan condition | Officer verifies evidence and proposes overdue/cure/default with effective date; distinct Approver confirms; apply disclosure and trading rules | Overdue updates risk disclosure without automatic trading pause; cure updates status; default/maturity stop new orders; missing record alone insufficient |
 | UC-017 | Authorized Officer, actual recovery received externally | Enter net receipt, source, reference and evidence; submit to UC-014 | Verified recovery input; interim receipt not automatic final loss |
@@ -518,8 +524,8 @@ Business use cases express actor goals and outcomes, not screens or endpoints. M
 ### 2.5.3 Cross-cutting automated subflows
 
 - Reservation and ownership settlement (UC-007/009): validate availability and eligibility; reserve once; verify external payment; transfer once; record event and update source. External bank transfer cannot be rolled back by DB.
-- Distribution and loss allocation (UC-014/017): use approved receipts, ownership intervals and financial rules; validate available cash and loss conservation; persist allocation once. Exact calculations Phase 3.
-- Automatic payout (UC-014/015): issuer-authorized instruction to external simulator, verified destination, confirm/reconcile. No manual investor claim.
+- Distribution and loss allocation (UC-013/014/017): use approved receipts, ownership intervals and financial rules; validate available cash and loss conservation; persist allocation once. Exact calculations Phase 3.
+- Automatic payout (UC-013/014/015): issuer-authorized instruction to external simulator, verified destination, confirm/reconcile. No manual investor claim.
 - Trading eligibility (UC-005/007/008/009/011/016): check loan state and source status independently; enforce BD-020/021/022; preserve in-flight obligations.
 - Audit: record actor, action, timestamp, source references and decisions; corrections traceable.
 
@@ -627,8 +633,8 @@ A Business Decision (BD) records an agreed policy; a Business Rule (BR) constrai
 | BR-051 | Eligible loan already disbursed, current, positive outstanding principal; pre-issuance partial principal repayment allowed if remaining schedule compatible. | BD-017 | UC-001,004 |
 | BR-052 | Issuance uses eligible outstanding principal at effective issuance date, not original principal or repaid principal. | BD-017 | UC-001,004 |
 | BR-053 | Buyer may purchase part or all of available secondary listing in whole units. | BD-018 | UC-009 |
-| BR-054 | Issuer Officer manually records actual external repayment receipt with unique reference; CreditForge does not collect borrower cash. | BD-013 | UC-013 |
-| BR-055 | Distinct Issuer Approver confirms repayment/recovery evidence before allocation. | BD-019 | UC-014,017 |
+| BR-054 | Automatically import and verify actual posted Mock Core Banking repayment with unique reference; CreditForge does not collect borrower cash. | BD-013-R1 | UC-013 |
+| BR-055 | Valid routine repayment is automatically accepted after authoritative verification; exceptions, corrections and recovery require distinct Issuer Approver review before new allocation or adjustment. | BD-019-R1 | UC-013,014,017 |
 | BR-056 | Confirmed overdue alone does not prevent primary/secondary trades; disclose risk and enforce other eligibility. | BD-020 revised | UC-005,007–009,016 |
 | BR-057 | Stop new trades on default, recovery, maturity or closure; resolve existing orders separately. | BD-020 revised | UC-011,012,016,018 |
 | BR-058 | Closing Offering prevents new orders; valid existing reservations may complete through original deadline if otherwise eligible. | BD-021 | UC-007,011 |
@@ -696,8 +702,8 @@ All quantities and accounting semantics are logical, not a schema. Principal amo
 | RT-013 | Buyer paid; callback duplicated or settlement fails | At most one transfer; unresolved obligation preserved | 025,036,043 |
 | RT-014 | Payment status unknown after reservation expiry | No release until reconciled | 068 |
 | RT-015 | Investor changes receiving account during submitted payout | Existing destination remains; new instructions use verified new account | 062 |
-| RT-016 | No manual receipt on due date | Alert for dual status review, not automatic overdue/default | 063 |
-| RT-017 | Officer enters repayment; Approver rejects | No distribution or payout | 054,055 |
+| RT-016 | No synchronized repayment receipt on due date | Alert for dual status review, not automatic overdue/default | 063 |
+| RT-017 | Repayment exception/recovery submitted; Approver rejects | No new distribution or payout | 054,055 |
 | RT-018 | Same approved receipt replayed | No duplicate distribution | 025,055 |
 | RT-019 | Payout fails | Payable remains outstanding, not spendable balance | 039–042 |
 | RT-020 | Confirmed principal loss exceeds Junior | Junior first; Senior pari passu; allocated sum equals confirmed loss | 006,008,009,024 |
@@ -821,13 +827,15 @@ Reviewed Idea Specification v2.1 (blob 022e9526d485036c217d42996ee4d49a806c95aa)
 | BD-012 | Automatic bank payout | Confirmed | 039–042 |
 | BD-006-R1 | Dual issuer and independent marketplace approval; separate Officer/Approver | Confirmed | 048,065 |
 | BD-007-R1 | Exclusive collateral; reuse only after verified release | Confirmed | 046 |
-| BD-013 | Manual actual external repayment recording | Confirmed | 054 |
+| BD-013 | Historical manual repayment recording | Superseded by BD-013-R1 | 054 |
+| BD-013-R1 | Automatically import and validate authoritative posted Mock Core Banking repayment | Confirmed | 054 |
 | BD-014 | Combined Marketplace Operator, distinct Admin | Confirmed | 049 |
 | BD-015 | One issuance and offering; no top-up or reopening | Confirmed | 050 |
 | BD-016 | One collateral per loan | Confirmed | 047 |
 | BD-017 | Eligible outstanding principal; prior principal repayment allowed | Confirmed | 051,052 |
 | BD-018 | Partial listing fill | Confirmed | 053 |
-| BD-019 | Distinct Approver verifies repayment/recovery receipts | Confirmed | 055 |
+| BD-019 | Historical approval of every receipt | Superseded by BD-019-R1 | 055 |
+| BD-019-R1 | Automatic validation of routine repayment; distinct Officer/Approver for exceptions, corrections and recovery | Confirmed | 055 |
 | BD-020 | ALLOW overdue primary/secondary trades with warnings and eligibility; stop new trades on default/recovery/maturity/closure | Confirmed | 056,057,064 |
 | BD-021 | Honor eligible existing orders after offering closure through original deadline | Confirmed | 058 |
 | BD-022 | Cancel unreserved remainder only | Confirmed | 059 |
@@ -841,7 +849,7 @@ Reviewed Idea Specification v2.1 (blob 022e9526d485036c217d42996ee4d49a806c95aa)
 | BD-030 | 10-minute checkout; no release on unknown payment status | Confirmed | 068 |
 | BD-031 | Retry failed payout after definitive nonpayment to verified new account; same entitlement | Confirmed | 069 |
 
-33 entries: 30 active confirmed policies, 3 superseded IDs; original BD-001/002 variants not counted separately.
+35 entries: 30 active confirmed policies, 5 superseded IDs; original BD-001/002 variants not counted separately.
 
 ### 2.8.2 Consistency review
 
@@ -903,6 +911,11 @@ Business objectives, boundaries, decisions, domain, processes, use cases and rul
 
 No final MVP commitment, database schema or validated financial formulas in this approved business-analysis baseline.
 
+
+## 2.9 Phase 3 business decision revision — Mock Core Banking Integration
+
+Owner confirmed the switch from manual recording to Mock Core Banking integration on 2026-11-27. BD-013-R1 and BD-019-R1 supersede BD-013 and BD-019 respectively; BR-054/055 and related processes/use cases updated. Maker-checker for recovery/corrections and unchanged BD-026 status confirmation are conservative scope boundaries; no real banking access, borrower portal, origination, or new guarantee. Only simulate repayment posting, transaction lookup/notification, and reconciliation for registered loans; simulator UI is an authorized demo control, not investor or borrower access. No requirement for a separate deployed microservice or complete banking product. Existing mock payment system still handles investor payments/payouts. Design source: [Mambu event triggers](https://docs.mambu.com/docs/event-triggers/) documents LOAN_REPAYMENT on posted repayment; [webhook notifications](https://docs.mambu.com/docs/webhook-notifications/) and [loan transactions](https://docs.mambu.com/api/api-v1/loantransactions/loan-transactions/) document notification and transaction retrieval. [OWASP webhook security](https://cheatsheetseries.owasp.org/cheatsheets/Webhook_Security_Cheat_Sheet.html) motivates authentication plus deduplication. These are reference patterns, not actual integration or an assertion of Mambu's exact approval policies. New test scenarios: valid posted repayment auto-allocates without manual approval; replay of same transaction (even new event ID) never reallocates; forged/unposted/mismatched event cannot allocate; missed event reconciled through authoritative transaction retrieval; late or reversed facts require traceable review; recovery continues dual approval. BD-020, FD-001–011 and pass-through financial mechanics unchanged.
+
 ## Revision history
 
 | Version | Change |
@@ -916,3 +929,4 @@ No final MVP commitment, database schema or validated financial formulas in this
 | 0.7 | Confirm BD-028–031 and BR-065–069 policy; retain BD-020 allow; add financial reference research and Phase 3 candidates |
 | 0.8 | Confirm Gate 07; consolidate decisions, consistency, traceability and open issues; Gate 08 pending |
 | 1.0 | Owner confirms Gate 08; approve Phase 2 baseline and authorize Phase 3 Financial Rules Specification |
+| 1.1 | Owner confirms Mock Core Banking integration; supersede BD-013/019 with R1; update servicing process, rules and use cases |
