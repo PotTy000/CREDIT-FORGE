@@ -1,9 +1,9 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.8 — Confirm mock repayment allocation order; FD-012–017 review pending  
+**Version:** 0.9 — Default, recovery and loss waterfall draft  
 **Phase:** 3 — Financial Rules Specification  
 **Approved business baseline:** [BRD v1.1](./BRD.md); approved Phase 2 baseline plus BD-013-R1/019-R1 revision  
-**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; 3.5 Repayment Waterfall; remaining sections pending.
+**Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; 3.5 Repayment Waterfall; 3.6 Default, Recovery & Loss Waterfall; remaining sections pending.
 
 Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifies an invariant or calculation. Confirmed business decisions remain binding. New financial candidates are proposed until explicitly approved. No actual money, underwriting, bank integration or blockchain. Examples are illustrative, not financial advice or legal conclusions.
 
@@ -426,8 +426,89 @@ FR-040: Mock Core Banking applies confirmed FD-018 interest-first then permitted
 
 Tests are specification vectors, not executed. FD-018 confirmed independently; FD-012–017 still pending explicit consolidated review. BRD v1.1 integration and confirmed FD-001–011 unchanged. Exact borrower-side due-date/accrued-interest closure details and excess resolution remain pending.
 
-## 3.6–3.8 Pending
-- 3.6 Default, Recovery & Loss Waterfall
+## 3.6 Default, Recovery & Loss Waterfall — research-first draft
+
+### 3.6.1 Reference evidence
+
+Official documentation indexed and retrieved on 2026-11-27:
+- [Goldfinch V1 Default Process](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/default-process): published 45-day grace period, subsequent Senior Pool linear writedown over 120 days, reversible on repayments; partial payments Senior before Backers and external legal recourse. Adopt distinction between delinquency/default/recovery, repayment priority; do not import 45/120 days, pool NAV writedown or default interest.
+- [Goldfinch Borrower Pools](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/guides/participating-in-borrower-pools): Junior first-loss, Senior priority.
+- [Centrifuge legacy](https://docs.centrifuge.io/getting-started/legacy/) and [Tinlake contracts](https://docs.centrifuge.io/tinlake/contracts/proxyactions/): Junior bears losses first; adopt tranche subordination, not pool valuation or redemption logic.
+- [Maple Defaults and Impairments](https://docs.maple.finance/legal/syrupusdc-and-syrupusdt-defaults-and-impairments): impairment can precede technical default; distinguish risk/estimated impairment from final realized loss. No pooled withdrawal, estimated NAV or modeled PD/LGD required here.
+These sources substantiate principles, not CreditForge's exact recovery component classification, interest cutoff, cost allocation or legal enforceability. BRD v1.1 confirmed BD-005/020/026 and BR-009/024 govern. FD-001–011 and FD-018 confirmed; FD-012–017 remain proposed (owner asked to continue, not explicit group approval).
+
+### 3.6.2 Status, grace and interest cutoff — FD-019/020 proposed
+
+Track verified Performing/Overdue/Default credit condition independently from maturity, offering state and recovery/closure progress. An approved actual shortfall after contractual due cutoff may support Overdue. Missing event alone triggers reconciliation, not delinquency or Default. Officer proposes evidence/effective timestamp and distinct Approver confirms (BD-026); cure only after all delinquent obligations resolved and verified. Grace duration and qualifying default events derive from compatible external loan terms, not universal hardcoded day count. Demo can use an illustrative configured period, not an approved numeric policy. No automatic status override by webhook. On Default or maturity stop new orders as already confirmed BD-020, cancel only eligible unreserved listings; reconcile pending/paid orders under BD-029/030 without confiscation. An independently justified material risk suspension can apply before Default; verified Overdue alone is not a trading ban.
+
+FD-020: for simulated investor ordinary interest, accrue on remaining Senior principal until earlier of effective confirmed Default, contractual maturity or full Senior principal repayment; prior earned amounts survive and become eligible due claims at the applicable final settlement cutoff, under compatible agreed issuance terms. No post-cutoff ordinary token coupon, penalty, compounding or default coupon; external borrower contractual interest may continue separately and is not assumed to vanish or be automatically distributable. Early full repayment settles earned interest per confirmed contract classification; no fabricated cash. Late facts that change prior accrual or ownership require maker-checker reconciliation, not destructive rewrite. Accrual cutoff is a local proposed simplification, not a Goldfinch rule. Once Default confirmed, recovery and closure flow remains controlled; no automatic reopening on a later receipt.
+
+### 3.6.3 Recovery receipt classification — FD-021 proposed
+
+Physical enforcement, collateral sale, creditor rights and external expenses are outside CreditForge. Officer records actual collected proceeds, unique source reference, effective date, documented attributable recovery expenses (not already deducted), net proceeds and verified contractual component application; distinct Approver accepts. Gross G>=0, eligible actual costs C>=0, C<=G, net N=G-C. If costs exceed proceeds or are disputed, reconcile externally; do not create negative distribution or new investor debt. Where bank provides net receipt, do not deduct costs again. Gross collateral value, estimate and pledged value are not recovered cash. Actual borrower debt can persist after token rights write-off; not a legal debt forgiveness. No automatic use of noneligible fees/penalties or pre-issuance interest. Separate unallocated/excess proceeds with explicit disposition; no fabricated payout.
+
+Recommended distressed application for compatible simulated terms: from verified eligible net proceeds, satisfy unpaid due Senior ordinary interest first (pro rata per proposed FD-015, including Bank and former owners), then remaining Senior principal, then Junior principal, then eligible Junior residual interest or other contractually assigned residual only after principal and Senior claims satisfied. This is a local recovery-specific adaptation of Senior priority, not ordinary borrower-side FD-018 or exact Goldfinch contract ordering. Requires verified external component classification consistent with this order; do not override posted principal as interest. If source classification incompatible, hold/reconcile, not silently reroute. Distinct recovery scope means Junior residual cannot consume cash needed for Senior principal during distressed recovery. Caps on eligible interest/principal and documented other components; excess after obligations separate. No Bank guarantee/advance. Approved interim proceeds may allocate immediately; payout failures do not undo allocations. Final loss recognition separate.
+
+Example: gross cash4.2bn, verified costs0.2bn, net4bn; due Senior interest100m; S4.8bn,J1.2bn. Compatible application gives interest100m, Senior principal3.9bn, Junior0; remaining S0.9bn,J1.2bn. At final closure principal loss2.1bn (Senior0.9bn, Junior1.2bn). No cost deducted twice. If no due interest, same net4bn is principal cash4bn and loss2bn. Figures illustrative; distinction between gross, net and principal-only cash critical.
+
+### 3.6.4 Principal first-loss formula — FD-022 proposed
+
+At start of recovery, remaining issued principal P0=S0+J0 (after all previously applied ordinary principal and recognized adjustments). For each verified eligible principal component x, 0<=x<=S+J, apply Senior-first principal per confirmed FD-003: xS=min(x,S); xJ=x-xS; reduce S,J once. Principal recovery rights assigned to holders at verified effective cutoff, including Bank-held Senior; use proposed FD-016 reconciliation for in-flight orders. Stop new trades in Default/Recovery. At final recovery approval, current unpaid balances S,J after all accepted principal receipts are the principal loss to recognize: L=S+J, LJ=J, LS=S. Equivalently from fixed opening recovery basis and cumulative principal recovery R, L=P0-R, LJ=min(L,J0), LS=max(0,L-J0), if no other adjustments and all R applied Senior-first. Never subtract cumulative R twice. For a partial recognized loss outside this final-only policy, do not apply unsupported formula as ordinary transaction. Senior loss allocated pro rata by remaining principal rights; Bank Junior bears its own full loss. Bank unsold Senior pari passu with external Senior. Reduce remaining principal rights for final loss with separate loss event, not cash repayment; no payout from loss. Preserve issued quantity/history; zero remaining principal means no new trades/accrual, final retirement is lifecycle record not destructive deletion. Do not call this market price.
+
+Example without due interest or costs: opening S4.8bn,J1.2bn. Net principal recovery5.5bn -> Senior4.8bn, Junior0.7bn, loss Junior0.5bn, Senior0. Net principal recovery4bn -> Senior4bn, Junior0, loss Junior1.2bn, Senior0.8bn. If 60% Senior external, investors receive2.4bn principal and lose0.48bn; Bank receives1.6bn principal, loses0.32bn Senior and1.2bn Junior. Zero recovery -> all remaining principal lost; full recovery -> no principal loss. Partial previous repayment example: 6bn opening issued, 2bn ordinary principal already repaid Senior-first, S2.8bn,J1.2bn at recovery; 3bn principal recovery -> Senior2.8bn,Junior0.2bn, Junior loss1bn only. Do not reuse original 80/20 ratio after repayment.
+
+### 3.6.5 Finalization, arrears and late recovery — FD-023 proposed
+
+Default is not final loss. Do not mechanically set principal to zero at Default or deduct estimated collateral value. Record interim recovery and outstanding balances; final loss only after Officer evidence of completed/exhausted recovery, distinct Approver review, all known receipts classified, in-flight ownership exceptions reconciled and no unposted known recovery. Closure of credit recovery does not cancel outstanding allocated payables. Separately write off unpaid eligible Senior interest that cannot be recovered at final settlement, including historical claims of former holders, pro rata for any final eligible interest receipt; do not add interest writeoff to principal loss. Junior residual is contingent, not guaranteed accrued coupon. Show principal returned, principal loss, interest paid, unpaid interest writeoff and outstanding payout separately. A failed payout is not credit loss. Financial closure requires outstanding payout resolution or explicit authorized exception record; preserve entitlement history and evidence.
+
+Unexpected post-finalization cash/correction requires authorized reconciliation; never delete prior loss postings or reopen market/offering. Preserve frozen original loss and interest claim beneficiaries and amounts for possible subsequent recovery, not current zero-balance ownership. Candidate restoration order for verified late recovery follows the same eligible Senior-interest/Senior-principal/Junior-principal priority with caps on unrecovered written-off claims and documented component classification; post distinct recovery adjustments reducing cumulative net loss, no new coupon accrual or automatic token revival. Detailed late recovery implementation and authorization in Phase 4/7; no automatic path while facts unresolved. This is a local simplified closed-loan accounting proposal.
+
+### 3.6.6 Rules and test vectors
+
+| ID | Rule |
+|---|---|
+| FR-042 | Status verification/grace from external terms; no missing-event default; BD-020 trading rules unchanged (FD-019) |
+| FR-043 | Stop ordinary token accrual at earliest approved cutoff; separate external contract charges (FD-020) |
+| FR-044 | Recovery requires actual evidence, maker-checker, gross/net/cost and component reconciliation (FD-021) |
+| FR-045 | Compatible distressed cash order Senior due interest, Senior principal, Junior principal, eligible Junior residual; cap claims (FD-021) |
+| FR-046 | Apply each interim principal recovery once; final loss on remaining unpaid balances, Junior first in cumulative comparison (FD-022) |
+| FR-047 | Senior loss pro rata by remaining rights incl Bank; distinguish cash return from writeoff; preserve token history |
+| FR-048 | Final interest writeoff separate from principal loss and allocated payout; no automatic final loss at Default (FD-023) |
+| FR-049 | Late recovery/corrections separately authorized, traceable, no renewed trading/accrual or duplicated entitlement (FD-023) |
+
+| ID | Input | Expected |
+|---|---|---|
+| FT-060 | Missing scheduled event only | reconcile; no automatic Default |
+| FT-061 | Verified Overdue, compatible eligibility | warnings, acknowledgement, trading allowed |
+| FT-062 | Confirmed Default, positive principal | no new trades; no immediate realized principal loss |
+| FT-063 | S4.8bn,J1.2bn, principal recovery5.5bn | Junior loss0.5bn, Senior0 at final approval |
+| FT-064 | Same basis, principal recovery4bn | Junior loss1.2bn, Senior0.8bn |
+| FT-065 | FT-064, external60% Senior | investor recovery2.4bn/loss0.48bn; Bank recovery1.6bn/loss1.52bn |
+| FT-066 | Same basis, principal recovery0 or6bn | full loss or zero loss respectively |
+| FT-067 | Previous normal principal2bn, then principal recovery3bn | S0,J1bn before final writeoff; loss1bn Junior only |
+| FT-068 | gross4.2bn,cost0.2bn,Senior due interest0.1bn, compatible classification | net4bn, interest0.1bn, principal3.9bn; final loss2.1bn |
+| FT-069 | Interim principal recovery2bn then2bn | same cumulative principal allocation as single4bn, no premature final loss or duplicate subtraction |
+| FT-070 | Approved allocation payout fails | payable remains; no credit loss of allocated cash |
+| FT-071 | Old holder due unpaid interest at closure | eligible final allocation or separate interest writeoff; no transfer to new holder |
+| FT-072 | Late recovery after final loss | authorized separate adjustment, preserved beneficiary/claim cap, no market reopening |
+| FT-073 | Disputed costs or incompatible components | hold/reconcile; no negative payout or silent reclassification |
+| FT-074 | Default before maturity; later ordinary schedule | no post-cutoff token accrual under FD-020; external charges separate |
+
+Tests are specifications, not executed. Rounding and conservation precision in 3.8.
+
+### 3.6.7 Review register
+
+| FD | Proposed decision |
+|---|---|
+| FD-019 | Verified credit status; grace from terms; no automatic Default or immediate final loss |
+| FD-020 | End ordinary token coupon at earliest Default/maturity/full principal repayment; preserve earned claims |
+| FD-021 | Verified net recovery; compatible distressed cash priority Senior interest > Senior principal > Junior principal > eligible residual; no double cost |
+| FD-022 | Interim Senior-first principal repayment; final principal loss Junior first, Senior pro rata; no double subtraction |
+| FD-023 | Final loss approval, separate unpaid interest writeoff/payables, controlled late recovery and closure |
+
+FD-019–023 proposed, FD-012–017 still pending; FD-018 confirmed separately. No BRD revision or legal validation. Explicit consolidated approval can cover FD-012–017 and FD-019–023 together; no need to reapprove confirmed decisions.
+
+## 3.7–3.8 Pending
 - 3.7 Investment Performance
 - 3.8 Financial Precision & Validation
 
@@ -443,3 +524,4 @@ Tests are specification vectors, not executed. FD-018 confirmed independently; F
 | 0.6 | Research Goldfinch V1 repayment priority and Mintos interest ownership; draft 3.5, FD-014–017, FR-032–039, FT-037–048; consolidate FD-012–017 review |
 | 0.7 | Apply BD-013-R1/019-R1 integration revision; update FD-014 source path and add FT-049–053; consolidated FD-012–017 remains pending |
 | 0.8 | Confirm FD-018 borrower-side interest-first principal-second allocation; add FR-040–041 and FT-054–059; FD-012–017 pending |
+| 0.9 | Research Goldfinch/Centrifuge/Maple default mechanics; draft FD-019–023, FR-042–049, FT-060–074; retain pending FD-012–017 |
