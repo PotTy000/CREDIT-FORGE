@@ -1,6 +1,6 @@
 # CreditForge — Business Requirements Document (BRD)
 
-**Version:** 1.2 — approved baseline; Quote-first checkout revision  
+**Version:** 1.3 — approved baseline; repayment window and transparency revision  
 **Baseline:** [Project Idea Specification v2.1](./PROJECT_IDEA_SPECIFICATION.md) (commit bbad1873c7d8221ea0d328035dfbf26237cacc65)  
 **Phase:** 2 — Business Analysis  
 **Coverage:** 2.1 Business Context & Objectives; 2.2 Stakeholder Analysis; 2.3 Business Domain Modeling; 2.4 Business Process Modeling; 2.5 Business Use Cases; 2.6 Business Rules Analysis; 2.7 Financial Model Research; 2.8 BRD Consolidation & Review.
@@ -936,6 +936,18 @@ Owner selected Listing Lock and Quote Lock terminology and authorized synchroniz
 
 BD-030-R1 supersedes BD-030 timing and Order-first flow. Immutable Quote binds Buyer, seller/source, quantity, price, total, current principal, disclosure/risk version, destination and expiry. Valid acceptance (strictly before deadline) creates exactly one Order referencing original Quote and Quote Lock; replay returns same Order without new lock. No payment before acceptance. Quote Lock persists until completed Settlement or verified safe release. Before acceptance no executable payment instruction may exist; expired/cancelled Quote may release immediately if this invariant is verified atomically. After acceptance, expired checkout stops new authorization; pending/unknown or paid transfer stays protected. BD-021/022/024 protect existing eligible Quote Locks, including unaccepted Quotes, through original deadline, not just Orders; closure/cancellation prevents new Quotes, releases only unquoted units. On still-open eligible listing, release returns quantity to Listing Lock availability; on cancelled listing releases to free holdings. On suspended listing, retained Listing Lock is unavailable until valid resume/cancel. No reprice existing Quote; material changes require revalidation and renewed consent or safe replacement before authorization; after authorization reconcile. FD-012/013/016 unchanged; Seller owns until Settlement. Exact API/schema and anti-hoarding limits are design items, not new approved policies. Historical Order-first wording is superseded by this revision; financial rounding/cash holds are unrelated to Quote Locks.
 
+## Repayment transparency revision (2026-11-27)
+
+Owner confirmed monthly Repayment Window, separate Repayment Processing status, public investor-facing disclosure and exclusion of Business Calendar / external holiday API / business-day adjustment. BD-032 (confirmed): each eligible simulated loan has contractual monthly repayment window with inclusive start/end calendar dates, Vietnam local time; early payment permitted under compatible terms; only verified unpaid due obligation after end cutoff is late. Example days 5–9 is illustrative, not universal. No holiday/weekend automatic extension. External incompatible contract terms are ineligible, not rewritten. BD-033 (confirmed): distinguish verified economic payment timing from processing/verification/approval timing; delays in bank processing never make timely payment late. Unknown source facts are unverified, not presumed unpaid; routine verified receipts remain automatic; BD-026 maker-checker for credit status unchanged. BD-034 (confirmed): publish sanitized repayment window, scheduled amount, verified applied amount and payment dates, verified shortfall/days late, repayment and processing status, last verification/update to current and prospective investors; show uncertainty explicitly. No raw bank documents, account numbers or internal notes. Asset detail, listing summary and Quote risk snapshot; material changes revalidate under BD-029/030-R1. No new guarantee or borrower portal.
+
+| Rule | Constraint |
+|---|---|
+| BR-071 | Contractual calendar-day window; no holiday shifting; early eligible payments attributed to the correct obligation; no fabricated future interest |
+| BR-072 | Actual verified effective payment and obligation satisfaction determine timeliness, not processing time; missing evidence remains unverified; confirmed credit status approval distinct |
+| BR-073 | Sanitized investor disclosure of repayment and processing facts, including uncertainty and material version changes |
+
+These decisions extend rather than replace BD-013-R1/019-R1/026. Existing due-date language means contractual window end for delinquency; actual accrual and component rules remain governed by FD. Detailed early allocation, month-end validity and cutoff representation in financial/requirements revisions. Historical audit unchanged.
+
 ## Revision history
 
 | Version | Change |
@@ -951,3 +963,4 @@ BD-030-R1 supersedes BD-030 timing and Order-first flow. Immutable Quote binds B
 | 1.0 | Owner confirms Gate 08; approve Phase 2 baseline and authorize Phase 3 Financial Rules Specification |
 | 1.1 | Owner confirms Mock Core Banking integration; supersede BD-013/019 with R1; update servicing process, rules and use cases |
 | 1.2 | Quote-first revision BD-030-R1; Listing Lock/Quote Lock terminology; original 10-minute deadline starts at Quote creation; existing locks protected; financial rules unchanged |
+| 1.3 | Confirm BD-032–034 and BR-071–073: repayment window, processing independence, investor transparency; no business calendar |
