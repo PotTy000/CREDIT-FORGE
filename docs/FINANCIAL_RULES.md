@@ -1,8 +1,8 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.6 — Repayment waterfall draft; FD-012–017 consolidated review  
+**Version:** 0.7 — Automated repayment integration; FD-012–017 review pending  
 **Phase:** 3 — Financial Rules Specification  
-**Approved business baseline:** [BRD v1.0](./BRD.md), commit 0f7dd05dd65e21e53407ee611b3aaab0f37a4094  
+**Approved business baseline:** [BRD v1.1](./BRD.md); approved Phase 2 baseline plus BD-013-R1/019-R1 revision  
 **Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; 3.5 Repayment Waterfall; remaining sections pending.
 
 Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifies an invariant or calculation. Confirmed business decisions remain binding. New financial candidates are proposed until explicitly approved. No actual money, underwriting, bank integration or blockchain. Examples are illustrative, not financial advice or legal conclusions.
@@ -11,7 +11,7 @@ Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifie
 
 ### 3.1.1 Scope and inherited rules
 
-BD-017/BR-051–052: registered loan already disbursed, current, positive eligible outstanding principal, prior principal repayment allowed if remaining schedule compatible. BD-015: one issuance and one primary offering. BD-028: material changes before issuance require new approval. BD-013/019: Officer records actual external receipts, distinct Approver verifies. BD-005: Bank retains Junior and unsold Senior; Senior pari passu; Junior first loss. BD-020/027/029: verified overdue trading allowed with warnings, acknowledgement and risk revalidation; default/recovery/maturity/closure stop new orders. BR-018/038: Investor accrues from completed settlement. Do not change external borrower obligations.
+BD-017/BR-051–052: registered loan already disbursed, current, positive eligible outstanding principal, prior principal repayment allowed if remaining schedule compatible. BD-015: one issuance and one primary offering. BD-028: material changes before issuance require new approval. BD-013-R1/019-R1: routine actual posted repayment automatically imported and verified against Mock Core Banking; distinct Officer/Approver for exceptions, corrections and recovery. BD-005: Bank retains Junior and unsold Senior; Senior pari passu; Junior first loss. BD-020/027/029: verified overdue trading allowed with warnings, acknowledgement and risk revalidation; default/recovery/maturity/closure stop new orders. BR-018/038: Investor accrues from completed settlement. Do not change external borrower obligations.
 
 ### 3.1.2 Principal concepts and opening snapshot
 
@@ -48,7 +48,7 @@ Illustration: P_open 4bn, 6 months remaining. Bullet: principal due 0 during mon
 
 ### 3.1.4 Expected versus actual cash
 
-Repayment schedule is planned obligations, never proof of receipt. Record schedule line date and expected principal/interest separately; actual receipt has unique external reference, effective receipt date, components, evidence and approval timestamp. Officer submits, distinct Approver approves (BD-019). Duplicate, invalid or unexplained allocation is rejected or routed to review. Actual interest payment may be full, partial, late or missing. Only accepted actual cash can trigger distribution. Unpaid amount remains an obligation under applicable financial rules, not investor wallet credit. Missing manual record triggers review; dual issuer confirmation required for overdue/default status. BD-020 remains ALLOW on verified overdue with warnings.
+Repayment schedule is planned obligations, never proof of receipt. Record schedule line date and expected principal/interest separately; actual receipt has unique external reference, effective receipt date, components, evidence and approval timestamp. Routine receipt accepted automatically after authoritative source verification and validation (BD-013-R1/019-R1); distinct Officer/Approver review exceptions, corrections and recovery. Duplicate, invalid or unexplained allocation is rejected or routed to review. Actual interest payment may be full, partial, late or missing. Only accepted actual cash can trigger distribution. Unpaid amount remains an obligation under applicable financial rules, not investor wallet credit. Missing synchronized receipt triggers reconciliation and review; dual issuer confirmation required for overdue/default status. BD-020 remains ALLOW on verified overdue with warnings.
 
 Principal balance update uses effective applied cash date, not payout date; exact retroactive receipt/cutoff behavior must be specified in 3.2/3.4 and detailed requirements. If late-entered evidence affects already settled transactions, preserve history and reconcile rather than silently rewriting completed trades.
 
@@ -72,7 +72,7 @@ During a material principal change, pending orders need revalidation of disclose
 |---|---|---|
 | FR-001 | Issuance based on verified eligible outstanding principal; no prior repaid principal | Inherited BD-017 |
 | FR-002 | Material opening snapshot change requires reapproval | Inherited BD-028 |
-| FR-003 | Expected repayment is not receipt; only distinct approved external receipt drives allocation | Inherited BD-013/019 |
+| FR-003 | Expected repayment is not receipt; only verified accepted external receipt drives allocation; human approval for exceptions/recovery | Inherited BD-013-R1/019-R1 |
 | FR-004 | Full-basis issuance represents opening principal; Bank initially owns all rights | Confirmed FD-005 |
 | FR-005 | Remaining issued principal rights reconcile to issued principal minus applied principal and recognized loss | Proposed invariant |
 | FR-006 | Monthly interest and bullet principal remaining schedule only | Confirmed FD-001 |
@@ -340,7 +340,7 @@ Reviewed official indexed documentation 2026-11-27: [Goldfinch V1 Borrowers](htt
 
 ### 3.5.2 Receipt validation and component separation (FD-014 proposed)
 
-External borrower repayment is not a CreditForge payment order. Officer records actual receipt reference, amount, applied effective timestamp, principal component C_P, ordinary interest component C_I, and any separately classified noneligible/pre-issuance interest, fee, penalty, or excess. Distinct Approver confirms evidence, unique reference, nonnegative components, sum equal to actual receipt, and compatible external contractual application. Expected schedule is not cash. Do not infer components from payment amount alone, divert principal to interest, or include pre-issuance income in issued rights. If ambiguous, reconcile before allocation. Noneligible amounts are separately accounted for; no silent disappearance, payout or capitalization. Normal waterfall applies only approved eligible components; distressed/default recovery uses 3.6. If simultaneous principal and interest, compute accrued rights through effective cutoff on pre-event balances, then apply components and reduce principal prospectively. Borrower contract accrual cutoff and precise simultaneous-event sequencing must match approved rules; ambiguous/backdated facts route to reconciliation.
+External borrower repayment is not a CreditForge payment order. Mock Core Banking posts the actual simulated receipt and provides transaction reference, amount, applied effective timestamp, principal component C_P, ordinary interest component C_I, and separately classified noneligible/pre-issuance interest, fee, penalty or excess. CreditForge authenticates notification, verifies the authoritative posted transaction, validates loan mapping, unique reference, nonnegative components, sum equal to receipt, and compatible external contractual application. Valid routine receipts auto-accept; distinct Officer/Approver review exceptions, corrections and recovery against source evidence. Expected schedule is not cash. Do not infer components from payment amount alone, divert principal to interest, or include pre-issuance income in issued rights. If ambiguous, reconcile before allocation. Noneligible amounts are separately accounted for; no silent disappearance, payout or capitalization. Normal waterfall applies only approved eligible components; distressed/default recovery uses 3.6. If simultaneous principal and interest, compute accrued rights through effective cutoff on pre-event balances, then apply components and reduce principal prospectively. Borrower contract accrual cutoff and precise simultaneous-event sequencing must match approved rules; ambiguous/backdated facts route to reconciliation.
 
 ### 3.5.3 Ordinary interest waterfall (FD-015 proposed)
 
@@ -396,12 +396,16 @@ Vectors are specifications, not executed software tests. Exact rounding and allo
 |---|---|
 | FD-012 | Seller retains all earned unpaid ordinary interest, including arrears; no mandatory accrued surcharge |
 | FD-013 | Actual settlement timestamp; fractional actual calendar-day accrual, no double accrual |
-| FD-014 | Use verified external receipt components; separate normal interest/principal; no silent reclassification |
+| FD-014 | Use automatically synchronized verified posted Mock Core Banking receipt components; separate normal interest/principal; no silent reclassification; exception maker-checker |
 | FD-015 | Due Senior interest first; pro rata across all same-priority unpaid due claims including prior owners and Bank, Junior eligible residual |
 | FD-016 | Effective repayment cutoff determines principal entitlement; reconcile late facts, revalidate orders and price/disclosure after material principal changes |
 | FD-017 | Post allocation once, retain separate payables and retry failures; no Bank self-transfer or advance |
 
-All six await explicit confirmation. User's conversational understanding of pro-rata and Bank retained Senior is not approval of the entire group. FD-001–011 remain confirmed. No BRD changes. Default and recovery, impairment, unpaid claim write-off, post-loss recoveries, exact precision and technical requirements remain open.
+All six await explicit confirmation. User's conversational understanding of pro-rata and Bank retained Senior is not approval of the entire group. FD-001–011 remain confirmed. BRD v1.1 revises only repayment integration. Default and recovery, impairment, unpaid claim write-off, post-loss recoveries, exact precision and technical requirements remain open.
+
+### 3.5.8 Integration revision
+
+Owner confirmed automated repayment ingestion (BD-013-R1/019-R1). FD-014's data source and validation path are updated accordingly, but the broader FD-012–017 consolidated financial gate remains pending. Normal receipt requires no human reentry or manual approval; exception/recovery handling remains dual approval. The term "approved receipt" in earlier rules means accepted via authoritative automated verification for routine repayment, or explicitly approved after evidence review for exceptional/recovery facts. Posted transaction identity (issuer + source transaction ID) is the economic deduplication key independent of event delivery ID; reconcile missed events and out-of-order or corrected facts against source records. A successful webhook alone is not financial finality. Do not rerun allocations after payout failures. FR-032–039 and FT-037–048 apply unchanged to accepted amounts. Additional candidate vectors FT-049 valid posted event auto-allocates once; FT-050 duplicate delivery or new event for same transaction no second allocation; FT-051 invalid source/unknown loan/component mismatch held; FT-052 missed event recovered by source lookup; FT-053 reversal or backdated conflicting fact reviewed before adjustment. Tests not executed. No new financial formulas or status policy approved by this change. Default/recovery evidence remains manually reviewed.
 
 ## 3.6–3.8 Pending
 - 3.6 Default, Recovery & Loss Waterfall
@@ -418,3 +422,4 @@ All six await explicit confirmation. User's conversational understanding of pro-
 | 0.4 | Research tranche constraints, leverage, fixed coupon and denomination; draft 3.3, FD-008–011, FR-018–024 and FT-020–027; consolidated review pending |
 | 0.5 | Confirm FD-001–011 without exceptions; research Mintos loan vs bond accrual; draft 3.4, FD-012/013, FR-025–031, FT-028–036 |
 | 0.6 | Research Goldfinch V1 repayment priority and Mintos interest ownership; draft 3.5, FD-014–017, FR-032–039, FT-037–048; consolidate FD-012–017 review |
+| 0.7 | Apply BD-013-R1/019-R1 integration revision; update FD-014 source path and add FT-049–053; consolidated FD-012–017 remains pending |
