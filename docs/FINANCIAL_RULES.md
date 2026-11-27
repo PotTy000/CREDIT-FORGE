@@ -1,8 +1,8 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 1.0 — approved financial policy baseline; Phase 3 specification complete  
+**Version:** 1.1 — approved financial policy baseline; repayment window refinement  
 **Phase:** 3 — Financial Rules Specification  
-**Approved business baseline:** [BRD v1.1](./BRD.md); approved Phase 2 baseline plus BD-013-R1/019-R1 revision  
+**Approved business baseline:** [BRD v1.3](./BRD.md); approved baseline plus repayment integration, Quote-first and repayment transparency revisions  
 **Coverage:** 3.1 Loan Principal & Repayment Schedule; 3.2 Interest Calculation; 3.3 Tranche & Tokenization Economics; 3.4 Ownership & Accrued Interest; 3.5 Repayment Waterfall; 3.6 Default, Recovery & Loss Waterfall; 3.7 Investment Performance; 3.8 Financial Precision & Validation.
 
 Financial Decision (FD) identifies a policy choice; Financial Rule (FR) specifies an invariant or calculation. Confirmed business decisions remain binding. New financial candidates are proposed until explicitly approved. No actual money, underwriting, bank integration or blockchain. Examples are illustrative, not financial advice or legal conclusions.
@@ -42,7 +42,7 @@ Example: VND 6bn disbursed; VND 2bn principal repaid before issuance; P_open=4bn
 | Equal principal | Each period on reducing outstanding | Fixed principal instalments | Requires declining principal rights per unit, allocation among tranches, order repricing/disclosure, accrual boundary handling |
 | Amortizing payment | Payment includes interest and principal | Variable principal component | Requires validated schedule and allocation, additional calculation and reconciliation |
 
-Confirmed FD-001: admit remaining contractual schedules with monthly interest and bullet principal, regardless of historical principal repayments; reject incompatible schedules at registration, not modify external loan terms. Allow final stub interest period. Interest day count, due dates on non-business days and calendar conventions pending 3.2. Monthly schedule does not mean equal interest amounts. A single interest-only period before maturity can be supported if schedule matches approved convention.
+Confirmed FD-001: admit remaining contractual schedules with monthly interest and bullet principal, regardless of historical principal repayments; reject incompatible schedules at registration, not modify external loan terms. Allow final stub interest period. Interest day count follows FD-006/007; contractual repayment windows follow FD-031, without holiday adjustment. Monthly schedule does not mean equal interest amounts. A single interest-only period before maturity can be supported if schedule matches approved convention.
 
 Illustration: P_open 4bn, 6 months remaining. Bullet: principal due 0 during months 1–5, 4bn at month 6; interest separately due per contract. Equal-principal alternative: six principal instalments totalling 4bn (rounding remainder in final instalment), decreasing interest base. Choosing Bullet limits scheduled repayment structure, not eligibility of prior principal repayment.
 
@@ -158,7 +158,7 @@ Borrower accrual uses contractual outstanding principal and borrower rate. Senio
 
 ### 3.2.3 Time boundary and effective facts
 
-Confirmed FD-007/013/016: use Vietnam business calendar dates (Asia/Ho_Chi_Minh), actual elapsed days, consistent half-open intervals for accrual; for principal, effective applied receipt date is boundary subject to approved simulated contract day-count convention. Use a consistent allocation cutoff between old and new holders, never credit a buyer for time before completed settlement (BD-003). Intraday ownership, pre-issuance claims, backdating and unpaid interest follow confirmed 3.4–3.6; contractual business-day due-date convention remains an implementation input. Do not silently round settlement back to start of day. If daily cutoff cannot faithfully represent ownership, use finer time segments or explicit eligible settlement policy; review before implementation. Late-approved effective facts trigger reconciliation, not retroactive destructive edits.
+Confirmed FD-007/013/016: use Vietnam business calendar dates (Asia/Ho_Chi_Minh), actual elapsed days, consistent half-open intervals for accrual; for principal, effective applied receipt date is boundary subject to approved simulated contract day-count convention. Use a consistent allocation cutoff between old and new holders, never credit a buyer for time before completed settlement (BD-003). Intraday ownership, pre-issuance claims, backdating and unpaid interest follow confirmed 3.4–3.6; contractual repayment window cutoff follows FD-031 without business-day adjustment. Do not silently round settlement back to start of day. If daily cutoff cannot faithfully represent ownership, use finer time segments or explicit eligible settlement policy; review before implementation. Late-approved effective facts trigger reconciliation, not retroactive destructive edits.
 
 ### 3.2.4 Worked examples (unrounded until presentation)
 
@@ -424,7 +424,7 @@ FR-040: Mock Core Banking applies confirmed FD-018 interest-first then permitted
 | FT-058 | Repeat same posted transaction | no second borrower balance reduction or CreditForge allocation |
 | FT-059 | Mid-period full prepayment with accrued not-yet-due interest or unclassified charges | verify contractual settlement components before closure; no automatic omission |
 
-Tests are specification vectors, not executed. FD-018 confirmed independently; FD-012–017 subsequently confirmed in consolidated review. BRD v1.1 integration and confirmed FD-001–011 unchanged. Full closure earned-interest rule in 3.8; contractual due-date adjustment and excess resolution workflow remain Phase 4/7 items.
+Tests are specification vectors, not executed. FD-018 confirmed independently; FD-012–017 subsequently confirmed in consolidated review. BRD v1.1 integration and confirmed FD-001–011 unchanged. Full closure earned-interest rule in 3.8; contractual repayment windows follow FD-031; excess resolution remains a Phase 4/7 item.
 
 ## 3.6 Default, Recovery & Loss Waterfall — confirmed policy
 
@@ -644,6 +644,28 @@ All vectors are requirements, not executed implementation tests.
 Owner explicitly confirmed FD-024–030 with no exceptions. All 30 FD approved. This is a policy baseline, not a claim that implementation, legal compliance, technical precision choices or all operational exception paths are verified. Phase 4 may start; unresolved technical/policy refinements in the audit must be addressed before implementation acceptance.
 
 
+## Repayment window refinement (FD-031; confirmed policy direction, 2026-11-27)
+
+BD-032–034 in BRD v1.3 confirm calendar-day repayment windows, independent processing time and investor transparency. FD-031 extends FD-001/007/018/019 without changing ACT/365, monthly interest-only plus bullet principal, ownership cutoffs or waterfall. Contract specifies each monthly obligation and start/end dates; early eligible payment before start is permitted; full timely satisfaction means verified eligible applied cash by inclusive end date (exclusive next local midnight boundary). No external holiday/calendar service or automatic business-day adjustment; Vietnam timezone and actual calendar arithmetic remain. A fixed monthly day range such as 5–9 is illustrative. Require concrete valid contractual dates for each remaining obligation, including short months/final maturity; incompatible or ambiguous schedule rejected/reconciled, never silently clamp dates or extend maturity. Grace/default terms separate from deadline. 
+Determine timeliness using authoritative effective payment/application evidence, not notification, processing, approval or payout date. Multiple partial receipts accumulate against correct scheduled obligation; remaining verified unpaid amount after end is overdue, and fully satisfied after cutoff is paid late. Source completeness required to assert unpaid; unknown remains unverified; loan-level credit status maker-checker BD-026 separate. Example full payment on 8, verified on 12, deadline 9 -> on time; actual full payment on 12 -> late 3 calendar days. If source verified before allocation, display timely payment and pending processing separately. 
+Early payment of current monthly obligation is not automatic principal prepayment. FD-018 applies actual eligible due interest and permitted principal; cash intended for not-yet-earned or not-yet-eligible interest remains explicitly classified unapplied/advance per compatible source evidence until eligible, no fabricated accrual, no double distribution or automatic principal reduction. Confirmed cash may be held pending classification at issuer, not investor wallet. Exact early application/contractual excess disposition and final stub remain requirements review; no new mandatory automatic advance mechanism. Historical due-date convention candidates superseded; H-03 holiday aspect resolved, other H-03 issues remain.
+
+| ID | Rule |
+|---|---|
+| FR-066 | Contractual repayment window and effective payment timing determine timeliness; independent verified processing status; no holiday shifting |
+| FR-067 | Correct obligation attribution and eligibility caps for early/partial payments; no duplicate application or premature interest distribution |
+
+| ID | Input | Expected |
+|---|---|---|
+| FT-103 | Window5–9, full eligible payment8, verification12 | Paid on time; processing delay distinct |
+| FT-104 | Window5–9, full eligible payment12 | Paid late3 calendar days |
+| FT-105 | Due60m, verified20m by end9, remaining40m on12 | Verified shortfall40m after deadline; paid late when fully satisfied |
+| FT-106 | Source unavailable after deadline | Unverified, not presumed overdue/default |
+| FT-107 | Early payment before5, unearned interest component | Preserve actual cash and source classification; no fabricated interest/principal distribution |
+| FT-108 | End9 is holiday | No automatic adjustment for compatible simulated contract |
+
+Tests specified, not executed. FD-001–030 unchanged except clarified window interpretation; FD-031 confirmed direction, implementation details proposed.
+
 ## Revision history
 
 | Version | Change |
@@ -659,3 +681,4 @@ Owner explicitly confirmed FD-024–030 with no exceptions. All 30 FD approved. 
 | 0.9 | Research Goldfinch/Centrifuge/Maple default mechanics; draft FD-019–023, FR-042–049, FT-060–074; retain pending FD-012–017 |
 | 0.10 | Confirm FD-012–017 and FD-019–023 without exceptions; draft 3.7 using Mintos NAR reference and standard XIRR; FD-024–026, FR-050–056, FT-075–088 |
 | 1.0 | Confirm FD-024–030 without exceptions; complete 3.8; normalize historical examples and statuses; FR-057–065, FT-089–102; Phase 4 handoff |
+| 1.1 | FD-031/FR-066–067/FT-103–108: repayment window and processing independence; no holiday adjustment; other approved economics unchanged |
