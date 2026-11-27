@@ -1,6 +1,6 @@
 # CreditForge — Financial Rules Specification
 
-**Version:** 0.1 — Draft for Review  
+**Version:** 0.2 — Reference research; revised F01 proposal  
 **Phase:** 3 — Financial Rules Specification  
 **Approved business baseline:** [BRD v1.0](./BRD.md), commit 0f7dd05dd65e21e53407ee611b3aaab0f37a4094  
 **Coverage:** 3.1 Loan Principal & Repayment Schedule; remaining sections pending.
@@ -58,7 +58,7 @@ Even a bullet schedule may permit early repayment under external contract. Credi
 
 Full prepayment: Bank confirms actual receipt and principal component; stop new orders once principal fully repaid/early redemption confirmed; reconcile in-flight orders under BD-029, retain pending payout/refund obligations; accrue interest only on the eligible outstanding basis until the applicable cutoff; distribute principal and settle any remaining interest rights according to later waterfall. Do not automatically mark all payouts complete. Token retirement and closure are separate from cash payout (3.5/3.6).
 
-Partial prepayment: compare (A) proportional reduction of remaining principal across all tranches and holders versus (B) Senior-first principal reduction. A preserves relative principal split and first-loss fraction; B reduces Senior before Junior, increases remaining Junior buffer fraction and changes bank economics. Neither is implied by junior first-loss rule alone, which concerns losses, not ordinary principal repayment. Proposed FD-003: proportional principal reduction across remaining Senior/Junior rights on normal principal receipts, not default recovery. Preserve equal treatment within Senior including bank-retained units.
+Partial prepayment: compare (A) proportional reduction of remaining principal across all tranches and holders versus (B) Senior-first principal reduction. A preserves relative principal split and first-loss fraction; B reduces Senior before Junior, increases remaining Junior buffer fraction and changes bank economics. Neither is implied by junior first-loss rule alone, which concerns losses, not ordinary principal repayment. Revised recommendation FD-003 after reference research: Senior-first normal principal reduction, with pro-rata allocation within each tranche, including Bank-retained Senior. Pro-rata across tranches remains an alternative. This is a proposed CreditForge rule, not a confirmed decision or exact reproduction of Goldfinch. Preserve equal treatment within Senior including bank-retained units.
 
 Proposed FD-004: retain token unit count through partial normal principal repayments, reduce remaining principal per unit proportionally; original face value remains historical denomination, current principal per unit is the financial base and must be disclosed. Do not confuse nominal, remaining principal, asking price and market value. Full redemption/retirement policy in 3.5/3.6. Alternative pro-rata token retirement creates fractional-unit and lot rounding challenges.
 
@@ -77,7 +77,7 @@ During a material principal change, pending orders need revalidation of disclose
 | FR-005 | Remaining issued principal rights reconcile to issued principal minus applied principal and recognized loss | Proposed invariant |
 | FR-006 | Monthly interest and bullet principal remaining schedule only | Proposed FD-001 |
 | FR-007 | Support confirmed full/partial unscheduled principal prepayment | Proposed FD-002 |
-| FR-008 | Normal principal reduction pro rata across outstanding tranche and holder principal | Proposed FD-003 |
+| FR-008 | Normal principal reduction Senior-first across tranches, pro rata within each tranche | Proposed FD-003 |
 | FR-009 | Partial principal payment reduces current principal per unit; unit count unchanged | Proposed FD-004 |
 | FR-010 | No new trades after full principal repayment; reconcile pending orders and unpaid obligations separately | Proposed detail; FD-002 |
 | FR-011 | Actual principal applied and payout status separate; no double reduction or payout | Inherited BR-025/040–042; details pending |
@@ -97,17 +97,39 @@ During a material principal change, pending orders need revalidation of disclose
 | FT-009 | Verified overdue with positive principal and otherwise eligible listing | Trading remains allowed with risk acknowledgement (BD-020/027) |
 | FT-010 | Receipt amount exceeds outstanding principal | Do not apply excess to principal; require classification/review |
 
-### 3.1.8 Financial Review Gate F01 — proposed
+### 3.1.8 Financial Review Gate F01 — proposed, revised after research
 
 | ID | Choice | Recommendation |
 |---|---|---|
 | FD-001 | Normal remaining repayment schedule | Monthly interest + bullet principal only |
 | FD-002 | Early principal repayment | Support both full and partial actual prepayment; full repayment stops new trading, retain pending obligations |
-| FD-003 | Normal principal allocation across tranches | Pro rata based on outstanding principal rights (not default loss/recovery priority) |
+| FD-003 | Normal principal allocation across tranches | Senior First across tranches, pro rata within each tranche; revised recommendation; separate default recovery rules |
 | FD-004 | Partial prepayment token handling | Maintain unit quantity; reduce remaining principal per unit; disclose before trading |
 | FD-005 | Issuance principal basis | Full eligible outstanding principal, Bank retains unsold Senior and all Junior; do not confuse sold amount and issuance basis |
 
 All five are proposed. FD-003/004 depend on FD-002 if partial prepayment permitted. Full-basis issuance is a proposed clarification of existing BRD's upper bound and bank retention, not a new confirmed decision. Early prepayment fee, interest cutoff, recovery ordering, precision, token retirement and exception handling remain unresolved. No real banking policy inferred.
+
+### 3.1.9 External reference research — FD-001–005 (2026-11-27)
+
+| FD | Official references and observed mechanism | CreditForge recommendation |
+|---|---|---|
+| FD-001 | [Maple Borrower Introduction](https://docs.maple.finance/maple-for-borrowers/introduction) describes periodic interest and principal at maturity. [Mintos amortization methods](https://help.mintos.com/hc/en-us/articles/7218968059281-What-amortization-methods-do-loans-have-on-Mintos) distinguishes full, partial, interest-only and bullet amortization. Mintos uses “bullet” for principal AND interest at maturity, so our term is more precisely monthly interest-only with bullet principal. | Retain monthly interest plus bullet principal only for scheduled payments. |
+| FD-002 | [Maple Borrower Hub](https://maple.finance/borrower-hub) describes paydown through accepted refinance terms; [Goldfinch V1 Callable Deals](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/guides/participating-in-callable-deals) discusses early principal payments; [Mintos Note repayments](https://help.mintos.com/hc/en-us/articles/5721195584145-How-do-Note-repayments-work) illustrates underlying cashflow pass-through. | Retain full and partial prepayment; do not import refinance or callable lender mechanics. |
+| FD-003 | [Goldfinch V1 Borrowers](https://docs.goldfinch.finance/goldfinch/goldfinch-v1/protocol-mechanics/borrowers) prioritizes due Senior interest/principal before Junior. Mintos Notes illustrates proportional allocation within an investment structure, not priority between subordinated tranches. | Revise recommendation to Senior-first principal, pro rata within tranche. Exact ordinary cash waterfall and overdue interest priority pending 3.5. |
+| FD-004 | [Mintos sink factor](https://help.mintos.com/hc/en-us/articles/5608575484049-What-is-the-sink-factor-of-a-Set-of-Notes) measures outstanding principal/original amount; [Mintos interest](https://help.mintos.com/hc/en-us/articles/25040259965457-How-is-interest-for-investments-in-loans-calculated) uses remaining invested capital. [Centrifuge legacy](https://docs.centrifuge.io/getting-started/legacy/) distinguishes asset rights and tranche shares; its pool NAV mechanics differ. | Retain unit counts for partial repayments, use separate Principal Factor per tranche. No inference about Mintos token counts. |
+| FD-005 | [Mintos skin in the game](https://help.mintos.com/hc/en-us/articles/5602648341265-What-is-skin-in-the-game) retains part of underlying loan at originator; [Notes creation](https://help.mintos.com/hc/en-us/articles/28939554356625-How-are-Notes-created) describes receivable acquisition and indirect structures. | Retain full eligible outstanding principal representation internally, Bank retains Junior/unsold Senior. Mintos retention is not evidence of first-loss or full-basis issuance. |
+
+Evidence: full official Maple introduction, loan management, borrower hub, Mintos amortization, repayment, interest, sink factor, skin-in-the-game and Notes creation, Centrifuge legacy pages retrieved. Goldfinch V1 borrower direct fetch failed unsupported Markdown; official indexed extracts support priority and Callable Deals prepayment statements. No contract audit; no claims that all products have identical rules.
+
+### 3.1.10 Revised candidate formulas and examples
+
+Let x be the confirmed principal component applied to normal outstanding rights, 0 <= x <= S+J. Senior repayment=min(x,S); Junior repayment=x-Senior repayment. Reduce each tranche by its own repayment; allocate within each tranche pro rata to remaining rights, including Bank. This is separate from loss allocation and does not decide priority between interest and principal in mixed receipts. For a 6bn loan (S=4.8bn,J=1.2bn) and 2bn normal principal receipt, Senior-first leaves S=2.8bn,J=1.2bn; Junior buffer 30%. Pro-rata leaves S=3.2bn,J=0.8bn; buffer 20%. If final net principal recovery subsequently equals 3bn (no other flows), 1bn loss: Senior-first Junior loss 1bn, Senior zero; pro-rata Junior loss 0.8bn, Senior 0.2bn. Total loss identical. Earlier Senior principal repayment reduces future Senior interest; Bank retains Junior exposure longer. Do not imply better investor outcomes in every scenario.
+
+For each tranche T, proposed Principal Factor f_T = remaining principal rights / initial issued principal of T. With unchanged units N_T and original face F, current principal per unit = remaining principal rights / N_T = F × f_T. Use separate factors for Senior and Junior; do not round factor before allocation. If Senior becomes fully repaid while Junior remains outstanding, stop new trades of zero-principal Senior, close its offering/listings to new orders and resolve existing orders separately; preserve unpaid claims and payouts. This is a proposed extension needing review under FD-004, not an approved policy. Token retirement and final loss effects remain open. Example with 48k Senior units and 12k Junior units, 2bn Senior-first repayment: Senior remaining per unit 58,333.333... VND, Junior 100,000 VND. Exact rounding Phase 3.8.
+
+Previous pro-rata examples/FT-006 remain alternative comparison vectors, not the recommended Senior-first policy. Add FT-011: 4bn opening (3.2bn Senior, 0.8bn Junior), 1bn normal principal receipt -> Senior 2.2bn, Junior 0.8bn, total 3bn; 32k Senior units at 68,750 VND remaining and 8k Junior at 100,000 VND. FT-012: Senior exhausted by principal repayment while Junior positive -> no new Senior trades under proposed zero-principal rule, preserve all accrued claims/payables. Both tests are proposed, not executed.
+
+All FD-001–005 remain unconfirmed; research does not change BRD v1.0 or BD-020. FD-003 recommendation revised, FD-004 refined, other recommendations retained. 
 
 ## 3.2–3.8 Pending
 
@@ -124,3 +146,4 @@ All five are proposed. FD-003/004 depend on FD-002 if partial prepayment permitt
 | Version | Change |
 |---|---|
 | 0.1 | Start Phase 3 from approved BRD v1.0; draft 3.1 and Financial Review Gate F01 |
+| 0.2 | Verify external reference mechanisms; revise FD-003 recommendation to Senior First; refine FD-004 with per-tranche Principal Factor; F01 still pending |
