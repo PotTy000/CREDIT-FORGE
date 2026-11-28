@@ -1,6 +1,6 @@
 # CreditForge — MVP Scope & Prioritization
 
-**Version:** 0.3 — Phase 5.1–5.4 proposed; enhancement backlog
+**Version:** 0.4 — Phase 5.1–5.5 proposed; feasibility constraints
 **Baseline:** [Requirements Specification v0.11](./REQUIREMENTS_SPECIFICATION.md) (blob 56a2de6e2f5dd6b9d6147e8472e43175052bc213); BRD v1.3; Financial Rules v1.1.
 **Status:** proposed scope, not implementation acceptance. Owner continuation authorizes planning from the consolidated draft, not blanket approval of all RD details. Solo developer; target two months. Exact deadline, available hours, hardware, budget and rubric unknown.
 
@@ -293,5 +293,37 @@ Owner requested explicit Should/Could backlog for spare capacity. Existing 200 r
 ### Delivery guardrails
 Suggested first optional picks: EB-001, EB-004, EB-003, EB-005 for presentation and demonstrable engineering; EB-002 if numerical policy and tests ready. EB-007/008 have greater domain impact and must not be rushed. All six existing Should functional IDs, four Should nonfunctional IDs and two Could functional IDs are represented; additional EB entries refine existing features or add explicitly optional capabilities. EB-003/014 overlap comparison and should reuse one implementation. No new blockchain, wallet, real banking, business calendar, loan origination, auction, auto-invest or real enforcement. No external source research claimed for these backlog suggestions; they derive from current project requirements and proposed presentation extensions. New feature details remain owner review; no changes to approved economics, no implementation or test claims.
 
+## 5.5 Feasibility & Milestone Constraints
+
+### Capacity and feasibility
+Confirmed constraints: one developer, target two months, authored application/test code TypeScript, implementation sequence Database -> Backend -> Frontend -> final integration/deployment, tests throughout. No detailed calendar schedule requested yet. Actual available hours, deadline, experience with chosen stack, hosting resources and rubric unknown. 188 Must requirements represent behavior and invariants, not 188 independent features; no validated effort estimate. Feasibility remains conditional, especially financial precision, effective ownership intervals, settlement and exception paths. Do not describe two months as guaranteed.
+
+| Domain | Relative complexity | Main delivery risk |
+|---|---|---|
+| Identity/authorization | Medium | Object scope, distinct approvals |
+| Asset registration/issuance | Medium–high | Stale source facts, duplicate issuance/collateral |
+| Primary | High | Overbooking, immutable quote and payment finality |
+| Secondary | Very high | Nested locks, transfer cutoff, historical claims |
+| Mock banking | High | Durable cash posting, callback loss, duplicate events |
+| Financial engine | Very high | Exact fractions, allocation caps, effective-time ordering |
+| Risk/recovery | High | Verified status vs processing, final loss and outstanding payouts |
+| Portfolio/operations | Medium–high | Cash vs rights, privacy, exception evidence |
+
+### Dependency and milestone conditions (not schedule)
+| Milestone | Depends on | Exit evidence |
+|---|---|---|
+| M1 Data foundation | Approved scope and resolved relevant financial policy | Reviewed domain model, schema/constraints for retained flows, repeatable migrations and seed fixtures, exact types, explicit state boundaries |
+| M2 Backend identity and issuance | M1 | Role/object and maker-checker tests; source-backed registration and single conserved issuance |
+| M3 Backend cash and trading | M1/M2, funded payment source | Primary and secondary end-to-end via API, Quote/Order/Lock invariants, direct verified cash, settlement, expiry and concurrency tests |
+| M4 Backend servicing and financial engine | M1–M3, source receipt contract | Ordinary/partial/early eligible payments, ownership interval accrual, principal/interest allocations and payouts, exact reconciliation, duplicate and crash tests |
+| M5 Backend risk/recovery and portfolio | M2–M4 | Window/processing disclosure, approved risk events, recovery waterfall and final loss, actual cash/rights metrics and exception visibility |
+| M6 Frontend integration | Stable core API contracts and backend acceptance | Role-scoped investor/issuer/operator/admin surfaces, checkout and financial disclosures; no client authoritative arithmetic |
+| M7 Integrated MVP readiness | M1–M6 | Selected Must acceptance cases pass, reproducible clean setup and demo, backup/restore and failure recovery evidence, known limitations documented |
+
+Dependencies describe business and verification order, not separate services or immutable schema. Financial engine model and accrual rules must inform M1 and M3 before trades are coded, even though full payout integration is tested in M4. Backend integration tests begin with each module, not postponed to M7. No architectural/library commitment here.
+
+### Scope control
+Reuse common primary/secondary Quote, transfer verification, settlement and reconciliation logic where semantics permit. Keep mock bank boundaries authoritative but do not require separate infrastructure. Prefer minimal role-scoped tables/forms to analytics dashboards; seeded funded fixtures and local simulated email; no real integration. Protect time for testing, documentation and defense; no optional EB work before critical core tests are stable. If capacity is insufficient, revisit whole capability scope with owner rather than bypassing authorization, exact accounting, locks, idempotency, unknown-payment handling or traceability. Do not mark unresolved fractional closure, payment, refund or recovery as complete. H-01 terminal rounding, H-02 price rounding, H-03 early/excess/payment classification, H-04/05 reconciliation/correction must be resolved for supported paths; H-06 design details deferred; H-07 relevant only if XIRR selected. H-09 partially resolved (team and target duration), exact hours/rubric/hardware still open. No new BRD/FD/RD decisions. No code, tests or benchmarks executed.
+
 ## Next
-5.5 feasibility and milestone constraints (detailed implementation scheduling deferred at owner request); 5.6 demo scenarios and acceptance gates; 5.7 consolidated scope review. No code, estimates of calendar duration, tests or benchmark results claimed. Review unresolved H-01–H-09 as relevant before implementation. No BRD/FD changes.
+5.6 demo scenarios and acceptance gates; 5.7 consolidated scope review. No code, estimates of calendar duration, tests or benchmark results claimed. Review unresolved H-01–H-09 as relevant before implementation. No BRD/FD changes.
