@@ -1,6 +1,6 @@
 # CreditForge — MVP Scope & Prioritization
 
-**Version:** 0.2 — Phase 5.1–5.4 proposed
+**Version:** 0.3 — Phase 5.1–5.4 proposed; enhancement backlog
 **Baseline:** [Requirements Specification v0.11](./REQUIREMENTS_SPECIFICATION.md) (blob 56a2de6e2f5dd6b9d6147e8472e43175052bc213); BRD v1.3; Financial Rules v1.1.
 **Status:** proposed scope, not implementation acceptance. Owner continuation authorizes planning from the consolidated draft, not blanket approval of all RD details. Solo developer; target two months. Exact deadline, available hours, hardware, budget and rubric unknown.
 
@@ -260,6 +260,38 @@ Descriptions below retain original trigger/requirement titles; normative details
 
 ### Open decisions and next
 This cut defers optional breadth but retains a large core; actual effort remains unverified. If capacity insufficient, revisit whole optional capabilities and presentation scope, never remove integrity checks or quietly change approved economics. H-01/H-02/H-03/H-04/H-05 must be addressed for retained flows before coding; H-06/H-07 technical design; H-09 hours/rubric/hardware unknown. Review priorities with owner before declaring MVP final. Next 5.5 feasibility and milestone constraints, without detailed calendar plan until requested; 5.6 demo/acceptance; 5.7 review. No implementation or tests run.
+
+## 5.4a Optional enhancement backlog
+
+Owner requested explicit Should/Could backlog for spare capacity. Existing 200 requirement assignments and approved BRD/FD unchanged. EB identifiers are optional delivery enhancements, not new approved REQ-F or RD. Relative effort S/M/L is a qualitative comparison, not estimated hours. Rank is suggested implementation order after core acceptance, not a calendar plan. Implement each selected enhancement database -> backend -> frontend where applicable; reuse existing authoritative facts and authorization, avoid unnecessary schema changes. No enhancement may bypass safety controls or delay core tests and defense preparation.
+
+### Should Have — recommended extensions
+| ID | Enhancement | Existing anchors | Relative effort | Minimum acceptance / boundary |
+|---|---|---|---|---|
+| EB-001 | Historical portfolio charts: actual principal/interest receipts, acquisition/sale/refunds and net cashflow by month; principal exposure by asset/industry | F151–159, FD-024–025 | S | Totals reconcile to scoped actual cash; nominal rights separately labeled; no invented historical NAV |
+| EB-002 | XIRR and return explanation | F160–161, FD-026, H-07 | M | Actual dated flows, eligible synthetic terminal only, N/A with reason; validate solver before release |
+| EB-003 | Advanced marketplace filters and sorting: coupon, remaining term, price discount/premium, risk, availability; compare selected assets side by side | F038/041/064/150 | S–M | Only published sanitized data; current principal and risk version, no guaranteed return or inferred fair price |
+| EB-004 | Investment lifecycle timeline and payout breakdown by asset/claim, from purchase through repayment and recovery | F120/126/146/152/162 | S–M | Trace actual effective events and separate payment/allocation/payout status; historical holder visibility scoped |
+| EB-005 | Quantitative performance benchmark suite and reproducible results report | NF021–024 | M | Document fixture, environment, latency/error/throughput and failures; no production SLA claim |
+| EB-006 | Forgot password with local simulated email delivery | F005 | S–M | Expiring single-use proof, generic responses, throttle, revoke sessions; no real email dependency required |
+| EB-007 | Verified collateral release and reuse | F040/144, BD-007-R1 | M | Distinct approval, external evidence, no overlapping active assignment; until implemented block reuse |
+| EB-008 | Late recovery after final loss | F145, FD-023 | L | Actual source cash, frozen original beneficiaries, priority/caps, maker-checker, net loss adjustment once; no reopening/accrual; resolve H-01/H-05 first |
+| EB-009 | Expanded issuer/operator operational analytics: cohort Quote funnel, aged locks, payout failure and overdue aggregates | F060/080/100/163–165/167 | S–M | Explicit denominator/time window, scoped records, no false success or private investor details |
+
+### Could Have — additional enhancements if time remains
+| ID | Enhancement | Existing anchors | Relative effort | Minimum acceptance / boundary |
+|---|---|---|---|---|
+| EB-010 | CSV statement/report export | F169 | S | Same scoped filters and as-of totals, safe encoding/formula injection protection, masked data |
+| EB-011 | In-app notifications and unread history | F166 | M | Dedup by event/recipient; scoped links; read state not financial state; no required email/SMS |
+| EB-012 | Investor watchlist/favorites | New optional UI capability; F038/041/064 | S | Own saved published asset IDs only; no automatic Quote, lock or order |
+| EB-013 | Read-only investment illustration calculator | FD-006/011/018/025, F027/043 | S–M | Explicit hypothetical amount/rate/dates and no default assumption; no forecast guarantee, no authoritative transaction price or actual allocation; no new YTM policy |
+| EB-014 | Asset comparison and downloadable printable own transaction receipt (browser print) | F126/153/170 | S | Compare disclosed terms, not investment recommendation; receipt only actual verified states and own data, not legal bank receipt; comparison can reuse EB-003 |
+| EB-015 | Demo scenario launcher and visual event timeline | F018/081/101, NF019/030 | M | Restricted demo control, isolated seeded fixture; ordinary source posting and transfer paths, never direct financial edits or production reset |
+| EB-016 | Read-only reconciliation drill-down visualization | F165/167/170 | S–M | Display differences, cash/rights conservation and correlation references; no automatic balancing entry |
+| EB-017 | UI polish: dark mode, saved filters, empty/loading/error states beyond core, responsive chart refinements | NF026/027 | S–M | Core accessibility and recoverable UI remain Must; no sensitive data persisted in unsafe client storage |
+
+### Delivery guardrails
+Suggested first optional picks: EB-001, EB-004, EB-003, EB-005 for presentation and demonstrable engineering; EB-002 if numerical policy and tests ready. EB-007/008 have greater domain impact and must not be rushed. All six existing Should functional IDs, four Should nonfunctional IDs and two Could functional IDs are represented; additional EB entries refine existing features or add explicitly optional capabilities. EB-003/014 overlap comparison and should reuse one implementation. No new blockchain, wallet, real banking, business calendar, loan origination, auction, auto-invest or real enforcement. No external source research claimed for these backlog suggestions; they derive from current project requirements and proposed presentation extensions. New feature details remain owner review; no changes to approved economics, no implementation or test claims.
 
 ## Next
 5.5 feasibility and milestone constraints (detailed implementation scheduling deferred at owner request); 5.6 demo scenarios and acceptance gates; 5.7 consolidated scope review. No code, estimates of calendar duration, tests or benchmark results claimed. Review unresolved H-01–H-09 as relevant before implementation. No BRD/FD changes.
